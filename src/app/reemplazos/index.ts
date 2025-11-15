@@ -1,0 +1,1 @@
+export * from './reemplazos.component';
