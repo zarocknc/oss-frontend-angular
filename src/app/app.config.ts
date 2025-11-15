@@ -14,6 +14,9 @@ import {
   Package,
   FileText,
   Settings,
+  Search,
+  UserSearch,
+  Save,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -33,6 +36,9 @@ export const appConfig: ApplicationConfig = {
         Package,
         FileText,
         Settings,
+        Search,
+        UserSearch,
+        Save,
       })
     ),
   ],

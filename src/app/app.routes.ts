@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { ReemplazosComponent } from './reemplazos';
 import {
-  AsignacionesComponent,
   CesesComponent,
   ConfiguracionComponent,
   EmpleadosComponent,
@@ -20,8 +19,7 @@ export const routes: Routes = [
   },
   {
     path: 'asignaciones',
-    component: AsignacionesComponent,
-    data: { title: 'Asignaciones' },
+    loadChildren: () => import('./pages/asignaciones/asignaciones.routes').then(m => m.ASIGNACIONES_ROUTES)
   },
   {
     path: 'reemplazos',
