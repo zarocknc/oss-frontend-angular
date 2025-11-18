@@ -17,6 +17,9 @@ import {
   Search,
   UserSearch,
   Save,
+  User,
+  Eye,
+  EyeOff,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -39,6 +42,9 @@ export const appConfig: ApplicationConfig = {
         Search,
         UserSearch,
         Save,
+        User,
+        Eye,
+        EyeOff,
       })
     ),
   ],

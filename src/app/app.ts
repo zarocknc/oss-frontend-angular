@@ -1,13 +1,13 @@
 import { Component, inject } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { LayoutComponent } from './layout/layout.component';
+
 import { TitleService } from './services/title.service';
 
 @Component({
   selector: 'app-root',
-  imports: [LayoutComponent],
-  template: '<app-layout />',
+  imports: [RouterOutlet],
+  template: '<router-outlet />',
   styles: ``,
 })
 export class App {
