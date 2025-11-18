@@ -13,8 +13,8 @@ import { ActivoService } from './services/activo.service';
   selector: 'app-asignaciones',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
+    CommonModule,
+    FormsModule,
     LucideAngularModule // Asegúrate de importar esto
   ],
   templateUrl: './asignaciones.component.html',
@@ -36,9 +36,9 @@ export class AsignacionesComponent implements OnInit {
   public colaborador: Colaborador | null = null;
   public activosDisponibles: Activo[] = [];
   public activoSeleccionado: Activo | null = null;
-  
+
   public isLoadingSearch: boolean = false;
-  
+
   ngOnInit(): void {
     // Podríamos cargar algo al inicio si fuera necesario
     // this.cargarActivosDisponibles('default'); // O esperar a tener un perfil
@@ -49,7 +49,7 @@ export class AsignacionesComponent implements OnInit {
       alert('Por favor, ingrese DNI o Correo');
       return;
     }
-    
+
     this.isLoadingSearch = true;
     this.colaborador = null;
     this.activosDisponibles = [];
@@ -58,7 +58,7 @@ export class AsignacionesComponent implements OnInit {
       .subscribe(colab => {
         this.colaborador = colab;
         this.isLoadingSearch = false;
-        
+
         // Si encontramos un colaborador, buscamos activos para su perfil
         if (colab) {
           this.cargarActivosDisponibles(colab.perfil);
@@ -77,6 +77,16 @@ export class AsignacionesComponent implements OnInit {
     this.activoSeleccionado = activo;
   }
 
+  nuevaAsignacion(): void {
+    // Resetear formulario para nueva asignación
+    this.colaborador = null;
+    this.activosDisponibles = [];
+    this.activoSeleccionado = null;
+    this.searchDni = '';
+    this.searchCorreo = '';
+    this.fechaAsignacion = new Date().toISOString().split('T')[0];
+  }
+
   asignarYGuardar(): void {
     if (!this.colaborador || !this.activoSeleccionado) {
       alert('Debe seleccionar un colaborador y un activo.');
@@ -87,17 +97,13 @@ export class AsignacionesComponent implements OnInit {
     console.log('Colaborador:', this.colaborador.nombres);
     console.log('Activo:', this.activoSeleccionado.serie);
     console.log('Fecha:', this.fechaAsignacion);
-    
+
     // Aquí iría la llamada al servicio para "guardar" la asignación
     // this.asignacionService.crearAsignacion(...)
-    
+
     alert('Asignación guardada exitosamente (simulación)');
-    
+
     // Limpiar vista
-    this.colaborador = null;
-    this.activosDisponibles = [];
-    this.activoSeleccionado = null;
-    this.searchDni = '';
-    this.searchCorreo = '';
+    this.nuevaAsignacion();
   }
 }

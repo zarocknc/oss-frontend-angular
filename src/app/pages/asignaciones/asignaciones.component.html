@@ -1,133 +1,191 @@
-<div class="p-6">
-  
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-3xl font-bold">Módulo Asignación</h1>
-    </div>
+<div class="p-6 h-full flex flex-col">
 
-  <div role="tablist" class="tabs tabs-lifted">
-    <a role="tab" class="tab tab-active">Asignación por Ingreso Nuevo</a>
-    <a role="tab" class="tab">Historial de asignaciones</a>
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6 bg-base-100 p-4 rounded-lg shadow-sm">
+    <div>
+      <h1 class="text-2xl font-bold text-base-content">Módulo Asignación</h1>
+      <div class="text-sm breadcrumbs">
+        <ul>
+          <li><a>Inicio</a></li>
+          <li>Asignaciones</li>
+        </ul>
+      </div>
+    </div>
+    <button class="btn btn-primary text-white gap-2" (click)="nuevaAsignacion()">
+      <lucide-icon name="plus" size="20"></lucide-icon>
+      Nueva Asignación
+    </button>
   </div>
 
-  <div class="bg-base-100 p-4 shadow-lg rounded-b-box">
+  <!-- Tabs -->
+  <div role="tablist" class="tabs tabs-lifted tabs-lg mb-0">
+    <a role="tab" class="tab tab-active font-semibold text-primary bg-base-100 border-b-0">Asignación por Ingreso
+      Nuevo</a>
+    <a role="tab" class="tab">Historial de asignaciones</a>
+    <a role="tab" class="tab flex-1 cursor-default border-b-base-300"></a>
+  </div>
 
-    <div class="flex flex-wrap gap-4 items-end">
-      
-      <div class="form-control">
-        <label class="label">
-          <span class="label-text">Dni colaborador</span>
-        </label>
-        <input 
-          type="text" 
-          placeholder="Buscar por DNI" 
-          class="input input-bordered w-full max-w-xs" 
-          [(ngModel)]="searchDni" />
-      </div>
+  <!-- Main Content Area -->
+  <div class="bg-base-100 p-6 shadow-lg rounded-b-box rounded-tr-box border border-base-300 flex-1">
 
-      <div class="form-control">
-        <label class="label">
-          <span class="label-text">Correo Colaborador</span>
-        </label>
-        <input 
-          type="email" 
-          placeholder="Buscar por Correo" 
-          class="input input-bordered w-full max-w-xs"
-          [(ngModel)]="searchCorreo" />
-      </div>
+    <div class="flex flex-col lg:flex-row gap-8">
 
-      <button class="btn btn-primary" (click)="buscarColaborador()" [disabled]="isLoadingSearch">
-        <lucide-icon name="search" size="16" class="mr-1"></lucide-icon>
-        <span *ngIf="!isLoadingSearch">Buscar</span>
-        <span *ngIf="isLoadingSearch" class="loading loading-spinner loading-xs"></span>
-      </button>
+      <!-- Left Column: Search & Date -->
+      <div class="flex-1 space-y-6">
 
-      <div class="form-control ml-auto">
-        <label class="label">
-          <span class="label-text">Fecha de asignación</span>
-        </label>
-        <input 
-          type="date" 
-          class="input input-bordered"
-          [(ngModel)]="fechaAsignacion" />
-      </div>
+        <!-- Search Form -->
+        <div class="flex flex-wrap gap-4 items-end">
+          <div class="form-control w-full sm:w-auto">
+            <label class="label py-1">
+              <span class="label-text font-medium">Dni colaborador</span>
+            </label>
+            <input type="text" class="input input-bordered bg-base-200 focus:bg-base-100 w-full sm:w-40"
+              [(ngModel)]="searchDni" />
+          </div>
 
-    </div>
+          <div class="form-control w-full sm:w-auto flex-1">
+            <label class="label py-1">
+              <span class="label-text font-medium">Correo Colaborador</span>
+            </label>
+            <input type="email" class="input input-bordered bg-base-200 focus:bg-base-100 w-full"
+              [(ngModel)]="searchCorreo" />
+          </div>
 
-    <div class="divider"></div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" *ngIf="colaborador">
-      
-      <div class="md:col-span-2">
-        <h3 class="text-lg font-semibold mb-2">Activos Disponibles para perfil: {{ colaborador.perfil }}</h3>
-        
-        <div class="overflow-x-auto h-96">
-          <table class="table table-pin-rows table-zebra">
-            <thead>
-              <tr>
-                <th></th> <th>Equipo</th>
-                <th>Marca</th>
-                <th>Modelo</th>
-                <th>Serie</th>
-                <th>Inv.</th>
-                <th>Estado</th>
-                <th>Gama</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let activo of activosDisponibles" 
-                  class="hover" 
-                  [class.active]="activo === activoSeleccionado">
-                <td>
-                  <input 
-                    type="radio" 
-                    name="activoSeleccionado" 
-                    class="radio" 
-                    (change)="seleccionarActivo(activo)" />
-                </td>
-                <td>{{ activo.tipoEquipo }}</td>
-                <td>{{ activo.marca }}</td>
-                <td>{{ activo.modelo }}</td>
-                <td>{{ activo.serie }}</td>
-                <td>{{ activo.codigoInventario }}</td>
-                <td><span class="badge badge-success">{{ activo.estado }}</span></td>
-                <td><span class="badge badge-outline">{{ activo.gama }}</span></td>
-              </tr>
-              <tr *ngIf="activosDisponibles.length === 0">
-                <td colspan="8" class="text-center">No se encontraron activos disponibles para este perfil.</td>
-              </tr>
-            </tbody>
-          </table>
+          <button class="btn btn-primary text-white px-8" (click)="buscarColaborador()" [disabled]="isLoadingSearch">
+            <span *ngIf="!isLoadingSearch">Buscar</span>
+            <span *ngIf="isLoadingSearch" class="loading loading-spinner loading-xs"></span>
+          </button>
         </div>
+
+        <!-- Date Picker -->
+        <div class="form-control w-full sm:w-auto max-w-xs">
+          <label class="label py-1">
+            <span class="label-text font-medium">Fecha de asignación</span>
+          </label>
+          <div class="relative">
+            <input type="date" class="input input-bordered bg-base-200 focus:bg-base-100 w-full pr-10"
+              [(ngModel)]="fechaAsignacion" />
+            <lucide-icon name="calendar" class="absolute right-3 top-3 text-base-content/50 pointer-events-none"
+              size="18"></lucide-icon>
+          </div>
+        </div>
+
       </div>
 
-      <div>
-        <div class="card bg-base-200 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title">Datos del Empleado</h2>
-            <p><strong>Nombre:</strong> {{ colaborador.nombres }} {{ colaborador.apellidos }}</p>
-            <p><strong>Puesto:</strong> {{ colaborador.puesto }}</p>
-            <p><strong>Perfil:</strong> {{ colaborador.perfil }}</p>
-            <p><strong>Área:</strong> {{ colaborador.area }}</p>
-            <p><strong>Sede:</strong> {{ colaborador.sede }}</p>
-            
-            <div class="card-actions justify-end mt-4">
-              <button 
-                class="btn btn-success w-full" 
-                (click)="asignarYGuardar()"
-                [disabled]="!activoSeleccionado">
-                <lucide-icon name="save" size="16"></lucide-icon>
-                Asignar y Guardar
-              </button>
+      <!-- Right Column: Employee Card -->
+      <div class="w-full lg:w-96">
+        <div class="card bg-base-200/50 border border-base-300 shadow-sm">
+          <div class="card-body p-5">
+            <h2 class="card-title text-lg mb-2 border-b border-base-300 pb-2">Datos del Empleado</h2>
+
+            <div class="space-y-2 text-sm" *ngIf="colaborador; else noColaborador">
+              <div class="grid grid-cols-[80px_1fr] gap-2">
+                <span class="font-semibold text-base-content/70">Nombre :</span>
+                <span class="font-medium">{{ colaborador.nombres }} {{ colaborador.apellidos }}</span>
+
+                <span class="font-semibold text-base-content/70">Apellido :</span>
+                <span class="font-medium">{{ colaborador.apellidos }}</span>
+
+                <span class="font-semibold text-base-content/70">Puesto :</span>
+                <span class="font-medium">{{ colaborador.puesto }}</span>
+
+                <span class="font-semibold text-base-content/70">Perfil :</span>
+                <span class="font-medium">{{ colaborador.perfil }}</span>
+
+                <span class="font-semibold text-base-content/70">Area :</span>
+                <span class="font-medium">{{ colaborador.area }}</span>
+
+                <span class="font-semibold text-base-content/70">Sede :</span>
+                <span class="font-medium">{{ colaborador.sede }}</span>
+              </div>
+
+              <div class="card-actions justify-end mt-6">
+                <button class="btn btn-neutral text-white btn-sm w-full" (click)="asignarYGuardar()"
+                  [disabled]="!activoSeleccionado">
+                  Asignar y Guardar
+                </button>
+              </div>
             </div>
+
+            <ng-template #noColaborador>
+              <div class="py-8 text-center text-base-content/50 italic">
+                Realice una búsqueda para ver los datos
+              </div>
+            </ng-template>
+
           </div>
         </div>
       </div>
 
     </div>
 
-    <div *ngIf="!colaborador && !isLoadingSearch" class="text-center p-10 text-base-content/50">
-      <lucide-icon name="user-search" size="48" class="inline-block mb-4"></lucide-icon>
-      <p>Busque un colaborador por DNI o Correo para ver los activos disponibles.</p>
+    <div class="divider my-6"></div>
+
+    <!-- Table Section -->
+    <div class="bg-base-200/30 rounded-lg border border-base-300 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
+          <thead class="bg-base-200 text-base-content font-semibold">
+            <tr>
+              <th class="w-12"></th>
+              <th>Equipo</th>
+              <th>Marca</th>
+              <th>Modelo</th>
+              <th>Serie</th>
+              <th>Inv.</th>
+              <th>Estado</th>
+              <th>Gama</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let activo of activosDisponibles" class="hover cursor-pointer"
+              [class.bg-primary/10]="activo === activoSeleccionado" (click)="seleccionarActivo(activo)">
+              <td>
+                <input type="radio" name="activoSeleccionado" class="radio radio-primary radio-sm"
+                  [checked]="activo === activoSeleccionado"
+                  (click)="$event.stopPropagation(); seleccionarActivo(activo)" />
+              </td>
+              <td class="font-medium">{{ activo.tipoEquipo }}</td>
+              <td>{{ activo.marca }}</td>
+              <td>{{ activo.modelo }}</td>
+              <td>{{ activo.serie }}</td>
+              <td>{{ activo.codigoInventario }}</td>
+              <td>
+                <span class="badge badge-sm" [ngClass]="{
+                    'badge-success text-white': activo.estado === 'Disponible',
+                    'badge-warning': activo.estado === 'En Revisión',
+                    'badge-error text-white': activo.estado === 'Malo'
+                  }">
+                  {{ activo.estado }}
+                </span>
+              </td>
+              <td><span class="badge badge-ghost badge-sm badge-outline">{{ activo.gama }}</span></td>
+            </tr>
+
+            <!-- Empty State -->
+            <tr *ngIf="activosDisponibles.length === 0">
+              <td colspan="8" class="h-32">
+                <div class="flex flex-col items-center justify-center text-base-content/40">
+                  <lucide-icon name="inbox" size="32" class="mb-2"></lucide-icon>
+                  <span>No hay activos disponibles para mostrar</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Mock Rows for Visual Filling (Optional, remove if not needed) -->
+            <tr *ngIf="activosDisponibles.length === 0 && !colaborador">
+              <td colspan="8" class="h-8 bg-base-100/50"></td>
+            </tr>
+            <tr *ngIf="activosDisponibles.length === 0 && !colaborador">
+              <td colspan="8" class="h-8 bg-base-100/50"></td>
+            </tr>
+            <tr *ngIf="activosDisponibles.length === 0 && !colaborador">
+              <td colspan="8" class="h-8 bg-base-100/50"></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>

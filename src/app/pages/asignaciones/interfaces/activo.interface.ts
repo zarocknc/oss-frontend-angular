@@ -5,6 +5,6 @@ export interface Activo {
   tipoEquipo: string; // Ej: 'Laptop'
   marca: string;
   modelo: string;
-  estado: 'Disponible' | 'Asignado' | 'Mantenimiento'; // [Flujos.pdf source 2]
+  estado: 'Disponible' | 'Asignado' | 'Mantenimiento' | 'En Revisión' | 'Malo'; // [Flujos.pdf source 2]
   gama: 'Baja' | 'Media' | 'Alta'; // [Flujos.pdf source 2]
 }
