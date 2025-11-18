@@ -20,6 +20,9 @@ import {
   User,
   Eye,
   EyeOff,
+  Plus,
+  Calendar,
+  Inbox,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -45,6 +48,9 @@ export const appConfig: ApplicationConfig = {
         User,
         Eye,
         EyeOff,
+        Plus,
+        Calendar,
+        Inbox,
       })
     ),
   ],

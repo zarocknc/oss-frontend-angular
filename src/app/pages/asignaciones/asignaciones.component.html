@@ -1,32 +1,46 @@
-<div class="p-6 h-full flex flex-col">
+<div class="p-6 h-full flex flex-col bg-base-200/30">
 
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6 bg-base-100 p-4 rounded-lg shadow-sm">
+  <!-- Header with Gradient -->
+  <div
+    class="flex justify-between items-center mb-6 bg-gradient-to-r from-base-100 to-base-200 p-6 rounded-2xl shadow-sm border border-base-200">
     <div>
-      <h1 class="text-2xl font-bold text-base-content">Módulo Asignación</h1>
-      <div class="text-sm breadcrumbs">
+      <h1 class="text-3xl font-bold text-base-content tracking-tight">Módulo Asignación</h1>
+      <div class="text-sm breadcrumbs text-base-content/60 mt-1">
         <ul>
           <li><a>Inicio</a></li>
-          <li>Asignaciones</li>
+          <li><span class="font-medium text-primary">Asignaciones</span></li>
         </ul>
       </div>
     </div>
-    <button class="btn btn-primary text-white gap-2" (click)="nuevaAsignacion()">
-      <lucide-icon name="plus" size="20"></lucide-icon>
-      Nueva Asignación
-    </button>
+    <div class="flex gap-3">
+      <button
+        class="btn btn-primary text-white gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+        (click)="nuevaAsignacion()">
+        <lucide-icon name="plus" size="20"></lucide-icon>
+        Nueva Asignación
+      </button>
+      <button
+        class="btn btn-secondary text-white gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+        (click)="openModal()">
+        <lucide-icon name="search" size="20"></lucide-icon>
+        Agregar Item
+      </button>
+    </div>
   </div>
 
   <!-- Tabs -->
-  <div role="tablist" class="tabs tabs-lifted tabs-lg mb-0">
-    <a role="tab" class="tab tab-active font-semibold text-primary bg-base-100 border-b-0">Asignación por Ingreso
-      Nuevo</a>
-    <a role="tab" class="tab">Historial de asignaciones</a>
+  <div role="tablist" class="tabs tabs-lifted tabs-lg mb-0 z-10">
+    <a role="tab"
+      class="tab tab-active font-bold text-primary bg-base-100 border-b-0 shadow-[0_-5px_10px_-5px_rgba(0,0,0,0.05)]">Asignación
+      por Ingreso Nuevo</a>
+    <a role="tab" class="tab text-base-content/70 hover:text-base-content transition-colors">Historial de
+      asignaciones</a>
     <a role="tab" class="tab flex-1 cursor-default border-b-base-300"></a>
   </div>
 
   <!-- Main Content Area -->
-  <div class="bg-base-100 p-6 shadow-lg rounded-b-box rounded-tr-box border border-base-300 flex-1">
+  <div
+    class="bg-base-100 p-8 shadow-xl rounded-b-2xl rounded-tr-2xl border border-base-300 flex-1 flex flex-col relative z-0">
 
     <div class="flex flex-col lg:flex-row gap-8">
 
@@ -34,39 +48,60 @@
       <div class="flex-1 space-y-6">
 
         <!-- Search Form -->
-        <div class="flex flex-wrap gap-4 items-end">
-          <div class="form-control w-full sm:w-auto">
-            <label class="label py-1">
-              <span class="label-text font-medium">Dni colaborador</span>
+        <div class="flex flex-wrap gap-4 items-end bg-base-200/50 p-4 rounded-xl border border-base-200">
+          <div class="form-control w-full sm:w-auto flex flex-col">
+            <label class="label py-1 justify-start">
+              <span class="label-text font-semibold text-base-content/80">Dni colaborador</span>
             </label>
-            <input type="text" class="input input-bordered bg-base-200 focus:bg-base-100 w-full sm:w-40"
-              [(ngModel)]="searchDni" />
+            <input type="text"
+              class="input input-bordered bg-base-100 focus:ring-2 focus:ring-primary/20 w-full sm:w-40 transition-all"
+              placeholder="12345678" [(ngModel)]="searchDni" />
           </div>
 
-          <div class="form-control w-full sm:w-auto flex-1">
-            <label class="label py-1">
-              <span class="label-text font-medium">Correo Colaborador</span>
+          <div class="form-control w-full sm:w-auto flex-1 flex flex-col">
+            <label class="label py-1 justify-start">
+              <span class="label-text font-semibold text-base-content/80">Correo Colaborador</span>
             </label>
-            <input type="email" class="input input-bordered bg-base-200 focus:bg-base-100 w-full"
-              [(ngModel)]="searchCorreo" />
+            <input type="email"
+              class="input input-bordered bg-base-100 focus:ring-2 focus:ring-primary/20 w-full transition-all"
+              placeholder="correo@empresa.com" [(ngModel)]="searchCorreo" />
           </div>
 
-          <button class="btn btn-primary text-white px-8" (click)="buscarColaborador()" [disabled]="isLoadingSearch">
+          <button class="btn btn-primary text-white px-8 shadow-sm" (click)="buscarColaborador()"
+            [disabled]="isLoadingSearch">
             <span *ngIf="!isLoadingSearch">Buscar</span>
             <span *ngIf="isLoadingSearch" class="loading loading-spinner loading-xs"></span>
           </button>
         </div>
 
-        <!-- Date Picker -->
+        <!-- Date Picker with Cally -->
         <div class="form-control w-full sm:w-auto max-w-xs">
           <label class="label py-1">
-            <span class="label-text font-medium">Fecha de asignación</span>
+            <span class="label-text font-semibold text-base-content/80">Fecha de asignación</span>
           </label>
-          <div class="relative">
-            <input type="date" class="input input-bordered bg-base-200 focus:bg-base-100 w-full pr-10"
-              [(ngModel)]="fechaAsignacion" />
-            <lucide-icon name="calendar" class="absolute right-3 top-3 text-base-content/50 pointer-events-none"
-              size="18"></lucide-icon>
+
+          <button popovertarget="cally-popover1"
+            class="input input-bordered bg-base-100 w-full flex items-center justify-between text-left font-normal focus:ring-2 focus:ring-primary/20 transition-all"
+            id="cally1" style="anchor-name:--cally1">
+            {{ fechaAsignacion || 'Seleccionar fecha' }}
+            <lucide-icon name="calendar" size="18" class="opacity-50"></lucide-icon>
+          </button>
+
+          <div popover id="cally-popover1"
+            class="dropdown bg-base-100 rounded-box shadow-lg border border-base-200 p-4 z-50"
+            style="position-anchor:--cally1; margin-top: 0.5rem;">
+            <calendar-date class="cally" [value]="fechaAsignacion"
+              (change)="fechaAsignacion = $any($event).target.value">
+              <svg aria-label="Previous" class="fill-current size-4 cursor-pointer hover:text-primary transition-colors"
+                slot="previous" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M15.75 19.5 8.25 12l7.5-7.5"></path>
+              </svg>
+              <svg aria-label="Next" class="fill-current size-4 cursor-pointer hover:text-primary transition-colors"
+                slot="next" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="m8.25 4.5 7.5 7.5-7.5 7.5"></path>
+              </svg>
+              <calendar-month></calendar-month>
+            </calendar-date>
           </div>
         </div>
 
@@ -74,42 +109,46 @@
 
       <!-- Right Column: Employee Card -->
       <div class="w-full lg:w-96">
-        <div class="card bg-base-200/50 border border-base-300 shadow-sm">
-          <div class="card-body p-5">
-            <h2 class="card-title text-lg mb-2 border-b border-base-300 pb-2">Datos del Empleado</h2>
+        <div class="card bg-base-100 border border-base-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <div class="card-body p-6">
+            <div class="flex items-center gap-3 mb-4 border-b border-base-200 pb-4">
+              <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <lucide-icon name="user" size="20"></lucide-icon>
+              </div>
+              <h2 class="card-title text-lg">Datos del Empleado</h2>
+            </div>
 
-            <div class="space-y-2 text-sm" *ngIf="colaborador; else noColaborador">
-              <div class="grid grid-cols-[80px_1fr] gap-2">
-                <span class="font-semibold text-base-content/70">Nombre :</span>
-                <span class="font-medium">{{ colaborador.nombres }} {{ colaborador.apellidos }}</span>
+            <div class="space-y-3 text-sm" *ngIf="colaborador; else noColaborador">
+              <div class="grid grid-cols-[80px_1fr] gap-2 items-center">
+                <span class="font-semibold text-base-content/60">Nombre :</span>
+                <span class="font-medium text-base-content">{{ colaborador.nombres }} {{ colaborador.apellidos }}</span>
 
-                <span class="font-semibold text-base-content/70">Apellido :</span>
-                <span class="font-medium">{{ colaborador.apellidos }}</span>
+                <span class="font-semibold text-base-content/60">Puesto :</span>
+                <span class="badge badge-ghost badge-sm">{{ colaborador.puesto }}</span>
 
-                <span class="font-semibold text-base-content/70">Puesto :</span>
-                <span class="font-medium">{{ colaborador.puesto }}</span>
+                <span class="font-semibold text-base-content/60">Perfil :</span>
+                <span class="font-medium text-base-content">{{ colaborador.perfil }}</span>
 
-                <span class="font-semibold text-base-content/70">Perfil :</span>
-                <span class="font-medium">{{ colaborador.perfil }}</span>
+                <span class="font-semibold text-base-content/60">Area :</span>
+                <span class="font-medium text-base-content">{{ colaborador.area }}</span>
 
-                <span class="font-semibold text-base-content/70">Area :</span>
-                <span class="font-medium">{{ colaborador.area }}</span>
-
-                <span class="font-semibold text-base-content/70">Sede :</span>
-                <span class="font-medium">{{ colaborador.sede }}</span>
+                <span class="font-semibold text-base-content/60">Sede :</span>
+                <span class="font-medium text-base-content">{{ colaborador.sede }}</span>
               </div>
 
-              <div class="card-actions justify-end mt-6">
-                <button class="btn btn-neutral text-white btn-sm w-full" (click)="asignarYGuardar()"
-                  [disabled]="!activoSeleccionado">
+              <div class="card-actions justify-end mt-6 pt-4 border-t border-base-200">
+                <button class="btn btn-success text-white btn-sm w-full shadow-sm hover:shadow-md transition-all"
+                  (click)="asignarYGuardar()" [disabled]="!activoSeleccionado">
+                  <lucide-icon name="save" size="16"></lucide-icon>
                   Asignar y Guardar
                 </button>
               </div>
             </div>
 
             <ng-template #noColaborador>
-              <div class="py-8 text-center text-base-content/50 italic">
-                Realice una búsqueda para ver los datos
+              <div class="py-10 text-center flex flex-col items-center text-base-content/40">
+                <lucide-icon name="user-search" size="40" class="mb-3 opacity-50"></lucide-icon>
+                <p class="text-sm italic">Realice una búsqueda para ver los datos</p>
               </div>
             </ng-template>
 
@@ -119,13 +158,14 @@
 
     </div>
 
-    <div class="divider my-6"></div>
+    <div class="divider my-8 text-base-content/30">Detalle de Activos</div>
 
     <!-- Table Section -->
-    <div class="bg-base-200/30 rounded-lg border border-base-300 overflow-hidden">
-      <div class="overflow-x-auto">
+    <div class="bg-base-100 rounded-xl border border-base-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+      <div class="overflow-x-auto flex-1">
         <table class="table table-zebra w-full">
-          <thead class="bg-base-200 text-base-content font-semibold">
+          <thead
+            class="bg-base-200/70 text-base-content font-bold uppercase text-xs tracking-wider sticky top-0 z-10 backdrop-blur-sm">
             <tr>
               <th class="w-12"></th>
               <th>Equipo</th>
@@ -138,20 +178,22 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let activo of activosDisponibles" class="hover cursor-pointer"
+            <tr *ngFor="let activo of activosDisponibles"
+              class="hover:bg-primary/5 cursor-pointer transition-colors group"
               [class.bg-primary/10]="activo === activoSeleccionado" (click)="seleccionarActivo(activo)">
               <td>
-                <input type="radio" name="activoSeleccionado" class="radio radio-primary radio-sm"
+                <input type="radio" name="activoSeleccionado"
+                  class="radio radio-primary radio-sm group-hover:scale-110 transition-transform"
                   [checked]="activo === activoSeleccionado"
                   (click)="$event.stopPropagation(); seleccionarActivo(activo)" />
               </td>
-              <td class="font-medium">{{ activo.tipoEquipo }}</td>
+              <td class="font-semibold text-primary">{{ activo.tipoEquipo }}</td>
               <td>{{ activo.marca }}</td>
               <td>{{ activo.modelo }}</td>
-              <td>{{ activo.serie }}</td>
-              <td>{{ activo.codigoInventario }}</td>
+              <td class="font-mono text-xs">{{ activo.serie }}</td>
+              <td class="font-mono text-xs">{{ activo.codigoInventario }}</td>
               <td>
-                <span class="badge badge-sm" [ngClass]="{
+                <span class="badge badge-sm font-medium shadow-sm" [ngClass]="{
                     'badge-success text-white': activo.estado === 'Disponible',
                     'badge-warning': activo.estado === 'En Revisión',
                     'badge-error text-white': activo.estado === 'Malo'
@@ -164,25 +206,15 @@
 
             <!-- Empty State -->
             <tr *ngIf="activosDisponibles.length === 0">
-              <td colspan="8" class="h-32">
-                <div class="flex flex-col items-center justify-center text-base-content/40">
-                  <lucide-icon name="inbox" size="32" class="mb-2"></lucide-icon>
-                  <span>No hay activos disponibles para mostrar</span>
+              <td colspan="8" class="h-64">
+                <div class="flex flex-col items-center justify-center text-base-content/30">
+                  <div class="bg-base-200 p-4 rounded-full mb-3">
+                    <lucide-icon name="inbox" size="32"></lucide-icon>
+                  </div>
+                  <span class="font-medium">No hay activos disponibles para mostrar</span>
                 </div>
               </td>
             </tr>
-
-            <!-- Mock Rows for Visual Filling (Optional, remove if not needed) -->
-            <tr *ngIf="activosDisponibles.length === 0 && !colaborador">
-              <td colspan="8" class="h-8 bg-base-100/50"></td>
-            </tr>
-            <tr *ngIf="activosDisponibles.length === 0 && !colaborador">
-              <td colspan="8" class="h-8 bg-base-100/50"></td>
-            </tr>
-            <tr *ngIf="activosDisponibles.length === 0 && !colaborador">
-              <td colspan="8" class="h-8 bg-base-100/50"></td>
-            </tr>
-
           </tbody>
         </table>
       </div>
@@ -190,3 +222,140 @@
 
   </div>
 </div>
+
+<!-- Search Modal -->
+<dialog class="modal backdrop-blur-sm" [class.modal-open]="showModal">
+  <div class="modal-box w-11/12 max-w-5xl h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl border border-base-300">
+
+    <!-- Modal Header -->
+    <div class="bg-primary text-primary-content p-5 flex justify-between items-center shadow-md z-20">
+      <div class="flex items-center gap-2">
+        <lucide-icon name="search" size="20"></lucide-icon>
+        <h3 class="font-bold text-xl">Buscar Activo</h3>
+      </div>
+      <button class="btn btn-sm btn-circle btn-ghost hover:bg-white/20 text-white" (click)="closeModal()">✕</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="flex-1 flex flex-col p-6 overflow-hidden bg-base-100">
+
+      <!-- Filters -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-base-200/50 p-5 rounded-xl border border-base-200">
+        <div class="form-control">
+          <label class="label text-xs font-semibold uppercase text-base-content/50 pb-1">Tipo</label>
+          <select class="select select-bordered select-sm w-full focus:ring-2 focus:ring-primary/20"
+            [(ngModel)]="modalFilters.tipo" (change)="filterModalData()">
+            <option value="">Todos</option>
+            <option value="Laptop">Laptop</option>
+            <option value="Monitor">Monitor</option>
+            <option value="Teclado">Teclado</option>
+            <option value="Mouse">Mouse</option>
+          </select>
+        </div>
+
+        <div class="form-control">
+          <label class="label text-xs font-semibold uppercase text-base-content/50 pb-1">Serie</label>
+          <input type="text" placeholder="Buscar serie..."
+            class="input input-bordered input-sm w-full focus:ring-2 focus:ring-primary/20"
+            [(ngModel)]="modalFilters.serie" (input)="filterModalData()" />
+        </div>
+
+        <div class="form-control">
+          <label class="label text-xs font-semibold uppercase text-base-content/50 pb-1">Estado</label>
+          <select class="select select-bordered select-sm w-full focus:ring-2 focus:ring-primary/20"
+            [(ngModel)]="modalFilters.estado" (change)="filterModalData()">
+            <option value="">Todos</option>
+            <option value="Disponible">Disponible</option>
+            <option value="Asignado">Asignado</option>
+            <option value="Mantenimiento">Mantenimiento</option>
+          </select>
+        </div>
+
+        <div class="form-control">
+          <label class="label text-xs font-semibold uppercase text-base-content/50 pb-1">Almacen</label>
+          <select class="select select-bordered select-sm w-full focus:ring-2 focus:ring-primary/20"
+            [(ngModel)]="modalFilters.almacen">
+            <option value="">Todos</option>
+            <option value="Principal">Principal</option>
+            <option value="Secundario">Secundario</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="flex-1 overflow-auto border border-base-200 rounded-xl shadow-inner bg-base-100 relative">
+        <table class="table table-pin-rows table-zebra w-full">
+          <thead class="bg-base-200 text-base-content font-bold text-xs uppercase tracking-wider">
+            <tr>
+              <th>Equipo</th>
+              <th>Marca</th>
+              <th>Modelo</th>
+              <th>Serie</th>
+              <th>Inv.</th>
+              <th>Estado</th>
+              <th>Gama</th>
+              <th class="text-right pr-6">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of paginatedModalData" class="hover:bg-base-200/50 transition-colors">
+              <td class="font-medium text-primary">{{ item.tipoEquipo }}</td>
+              <td>{{ item.marca }}</td>
+              <td>{{ item.modelo }}</td>
+              <td class="font-mono text-xs text-base-content/70">{{ item.serie }}</td>
+              <td class="font-mono text-xs text-base-content/70">{{ item.codigoInventario }}</td>
+              <td>
+                <span class="badge badge-sm font-medium" [ngClass]="{
+                  'badge-success text-white': item.estado === 'Disponible',
+                  'badge-warning': item.estado === 'En Revisión',
+                  'badge-error text-white': item.estado === 'Malo',
+                  'badge-ghost': item.estado === 'Asignado'
+                }">{{ item.estado }}</span>
+              </td>
+              <td><span class="badge badge-outline badge-xs">{{ item.gama }}</span></td>
+              <td class="text-right">
+                <button class="btn btn-xs btn-primary text-white shadow-sm hover:shadow-md"
+                  (click)="selectActivoFromModal(item)">
+                  Seleccionar
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="paginatedModalData.length === 0">
+              <td colspan="8" class="text-center py-12 text-base-content/40">
+                <div class="flex flex-col items-center gap-2">
+                  <lucide-icon name="search-x" size="32"></lucide-icon>
+                  <span>No se encontraron resultados</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex justify-between items-center mt-4 pt-4 border-t border-base-200">
+        <span class="text-xs text-base-content/50">Mostrando {{ paginatedModalData.length }} de {{ totalItems }}
+          resultados</span>
+        <div class="join shadow-sm">
+          <button class="join-item btn btn-sm btn-outline" [disabled]="currentPage === 1"
+            (click)="changePage(currentPage - 1)">«</button>
+          <button class="join-item btn btn-sm btn-outline no-animation pointer-events-none font-normal">Página {{
+            currentPage }}</button>
+          <button class="join-item btn btn-sm btn-outline"
+            [disabled]="currentPage >= Math.ceil(totalItems / itemsPerPage)"
+            (click)="changePage(currentPage + 1)">»</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="bg-base-200 p-4 flex justify-end gap-2 border-t border-base-300 z-20">
+      <button class="btn btn-ghost hover:bg-base-300" (click)="closeModal()">Cancelar</button>
+    </div>
+
+  </div>
+  <form method="dialog" class="modal-backdrop bg-black/20 backdrop-blur-sm">
+    <button (click)="closeModal()">close</button>
+  </form>
+</dialog>
