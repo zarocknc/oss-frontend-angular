@@ -30,6 +30,9 @@ import {
   FileSpreadsheet,
   CheckCircle,
   Trash2,
+  MapPin,
+  Monitor,
+  Edit,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -65,6 +68,9 @@ export const appConfig: ApplicationConfig = {
         FileSpreadsheet,
         CheckCircle,
         Trash2,
+        MapPin,
+        Monitor,
+        Edit,
       })
     ),
   ],
