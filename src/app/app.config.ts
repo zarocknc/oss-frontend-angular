@@ -23,6 +23,7 @@ import {
   Plus,
   Calendar,
   Inbox,
+  ChevronRight,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -51,6 +52,7 @@ export const appConfig: ApplicationConfig = {
         Plus,
         Calendar,
         Inbox,
+        ChevronRight,
       })
     ),
   ],

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { ReemplazosComponent } from './reemplazos';
+
 import { LayoutComponent } from './layout/layout.component';
 import { LoginComponent } from './pages/login/login.component';
 import {
@@ -34,7 +34,7 @@ export const routes: Routes = [
       },
       {
         path: 'reemplazos',
-        component: ReemplazosComponent,
+        loadChildren: () => import('./pages/reemplazos/reemplazos.routes').then(m => m.REPLACEMENT_ROUTES),
         data: { title: 'Reemplazos' },
       },
       {
