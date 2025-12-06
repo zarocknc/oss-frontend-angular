@@ -134,4 +134,14 @@ export class InventoryService {
         return a;
     }));
   }
+
+  addAssets(newAssets: InventoryAsset[]) {
+    this._assets.update(current => [...current, ...newAssets]);
+  }
+
+  getNextId(): string {
+      const ids = this._assets().map(a => parseInt(a.id)).filter(n => !isNaN(n));
+      const max = ids.length > 0 ? Math.max(...ids) : 0;
+      return (max + 1).toString();
+  }
 }

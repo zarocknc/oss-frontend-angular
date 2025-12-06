@@ -25,6 +25,11 @@ import {
   Inbox,
   ChevronRight,
   RotateCcw,
+  Boxes,
+  PackageCheck,
+  FileSpreadsheet,
+  CheckCircle,
+  Trash2,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -55,6 +60,11 @@ export const appConfig: ApplicationConfig = {
         Inbox,
         ChevronRight,
         RotateCcw,
+        Boxes,
+        PackageCheck,
+        FileSpreadsheet,
+        CheckCircle,
+        Trash2,
       })
     ),
   ],
