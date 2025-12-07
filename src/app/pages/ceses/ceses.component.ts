@@ -223,9 +223,15 @@ export class CesesComponent {
 
   handleReturnAsset(asset: AssignedAsset) {
     if (this.selectedProcess()) {
-       this.offboardingService.markAssetAsReturned(this.selectedProcess()!.id, asset.id);
-       this.refreshSelection();
-       this.applyFilters(); 
+       this.offboardingService.markAssetAsReturned(this.selectedProcess()!.id, asset.id)
+        .subscribe({
+          next: () => {
+             this.refreshSelection();
+             this.applyFilters();
+             alert("Activo marcado como devuelto");
+          },
+          error: (err) => alert("Error al conectar con backend: " + err.message)
+        });
     }
   }
 

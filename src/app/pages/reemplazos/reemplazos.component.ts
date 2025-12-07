@@ -265,7 +265,7 @@ export class ReplacementComponent {
 
   confirmReplacement() {
     if (this.selectedEmployee() && this.assetToReplace() && this.replacementAsset()) {
-      this.replacementService.createReplacement({
+      this.replacementService.confirmReplacement({
         date: this.formData.date,
         ticket: this.formData.ticket,
         employee: this.selectedEmployee()!,
@@ -273,13 +273,18 @@ export class ReplacementComponent {
         newAsset: this.replacementAsset()!,
         observations: this.formData.observations,
         reportUrl: '#'
+      }).subscribe({
+        next: () => {
+          alert('Reemplazo confirmado exitosamente');
+          this.cancelReplacement();
+          this.formData.ticket = '';
+          this.formData.observations = '';
+        },
+        error: (err: any) => { // Type explicit
+            console.error(err);
+            alert('Error al confirmar reemplazo (Backend offline?)');
+        }
       });
-      // Reset
-      alert('Reemplazo confirmado exitosamente');
-      this.cancelReplacement();
-      this.formData.ticket = '';
-      this.formData.observations = '';
-      // Refresh assets? In mock, we pushed updates.
     }
   }
 }

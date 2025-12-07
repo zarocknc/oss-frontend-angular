@@ -4,6 +4,7 @@ export type AssetStatus = 'Disponible' | 'Asignado' | 'En mantenimiento' | 'Baja
 
 export interface InventoryAsset {
   id: string;
+  assignmentId?: string;
   alm: string; // Almacen location
   type: string; // Equipo: Laptop, Monitor
   brand: string;
@@ -30,6 +31,7 @@ export class InventoryService {
   private _assets = signal<InventoryAsset[]>([
     {
       id: '1',
+      assignmentId: '101',
       alm: 'SAN BORJA',
       type: 'LAPTOP',
       brand: 'LENOVO',
@@ -107,6 +109,7 @@ export class InventoryService {
         invCode: '00940',
         cmdbCode: 'NUEVO',
         status: 'Asignado',
+        assignmentId: '103',
         observation: '',
         age: '2 años',
         bookValue: 'S/. 600'

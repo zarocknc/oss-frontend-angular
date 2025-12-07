@@ -1,4 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { switchMap } from 'rxjs/operators';
 
 export interface Employee {
   id: string;
@@ -9,6 +11,7 @@ export interface Employee {
 
 export interface Asset {
   id: string;
+  assignmentId?: string;
   type: string; // Laptop, Monitor
   brand: string;
   model: string;
@@ -35,7 +38,10 @@ export interface ReplacementRecord {
   providedIn: 'root'
 })
 export class ReplacementService {
-  // Mock Data
+  private http = inject(HttpClient);
+  private apiUrl = 'http://localhost:8080/api/v1';
+
+  // Mock Data (Kept for UI population if needed, but actions are now API driven)
   private _employees = signal<Employee[]>([
     { id: '1', name: 'Ana Martinez', email: 'ana.martinez@emp.com', dni: '45678901' },
     { id: '2', name: 'Carlos Lopez', email: 'carlos.lopez@emp.com', dni: '12345678' }
@@ -43,8 +49,8 @@ export class ReplacementService {
 
   private _assets = signal<Asset[]>([
     // Assigned to Ana
-    { id: 'a1', type: 'Laptop', brand: 'HP', model: 'Probook 440 g8', series: '5CD2782JK2', state: 'Usado', status: 'assigned' },
-    { id: 'a2', type: 'Monitor', brand: 'HP', model: 'Probook 440 g8', series: '5CD2782J98', state: 'Usado', status: 'assigned' },
+    { id: 'a1', assignmentId: '101', type: 'Laptop', brand: 'HP', model: 'Probook 440 g8', series: '5CD2782JK2', state: 'Usado', status: 'assigned' },
+    { id: 'a2', assignmentId: '102', type: 'Monitor', brand: 'HP', model: 'Probook 440 g8', series: '5CD2782J98', state: 'Usado', status: 'assigned' },
     // Available
     { id: 's1', type: 'Laptop', brand: 'HP', model: 'Probook 640 G8', series: '5CD980933', state: 'Usado', status: 'available', location: 'San Isidro', inventoryCode: 'EURP083', gama: 'Gama B' },
     { id: 's2', type: 'Laptop', brand: 'HP', model: 'Probook 640 G8', series: '5CD980934', state: 'Nuevo', status: 'available', location: 'Miraflores', inventoryCode: 'EURP084', gama: 'Gama A' },
@@ -92,15 +98,22 @@ export class ReplacementService {
     });
   }
 
-  createReplacement(data: Omit<ReplacementRecord, 'id'>) {
-    const newRecord: ReplacementRecord = {
-      ...data,
-      id: Math.random().toString(36).substr(2, 9)
+  // "One-Click" Replacement for the UI
+  confirmReplacement(data: any) {
+    // 1. Prepare Payload for Step 1
+    const requestPayload = {
+      asignacionOriginalId: +data.originalAsset.assignmentId, // Use assignmentId
+      dispositivoReemplazoId: +data.newAsset.id,
+      motivoReemplazoId: 1, // 1 = Falla HW (Hardcoded or select from UI)
+      usuarioRegistraId: 1, // Hardcoded admin
+      descripcionMotivo: data.observations || 'Reemplazo express'
     };
-    this._replacements.update(list => [newRecord, ...list]);
-    
-    // In a real app, we would update asset status here
-    // For mock, we can swap them if we want, but just recording it is enough for the UI flow
-    console.log('Replacement Created', newRecord);
+
+    return this.http.post<any>(`${this.apiUrl}/reemplazos`, requestPayload).pipe(
+      // 2. Automatically trigger Step 2 using the ID from Step 1
+      switchMap(createdRequest => {
+        return this.http.post(`${this.apiUrl}/reemplazos/${createdRequest.id}/ejecutar`, {});
+      })
+    );
   }
 }
