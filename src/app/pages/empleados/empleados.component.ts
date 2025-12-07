@@ -1,21 +1,22 @@
 import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Search, Plus, MapPin, User, Calendar, Briefcase, Mail } from 'lucide-angular';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { LucideAngularModule, Search, Plus, MapPin, User, Calendar, Briefcase, Mail, X } from 'lucide-angular';
 import { EmployeeService, Employee, AssignedAsset } from './services/employee.service';
+import { ConfigurationService } from '../configuracion/services/configuration.service';
 
 @Component({
   selector: 'app-empleados',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, LucideAngularModule],
   template: `
-    <div class="p-6 max-w-[1600px] mx-auto h-[calc(100vh-64px)] flex flex-col">
+    <div class="p-6 max-w-[1600px] mx-auto h-[calc(100vh-64px)] flex flex-col relative">
       <!-- Header -->
        <div class="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm mb-6">
         <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
            Módulo Empleados
         </h1>
-        <button class="btn btn-primary text-white gap-2 shadow-md">
+        <button class="btn btn-primary text-white gap-2 shadow-md" (click)="openModal()">
           <lucide-icon name="plus" [size]="18"></lucide-icon>
           Nuevo Empleado
         </button>
@@ -35,15 +36,15 @@ import { EmployeeService, Employee, AssignedAsset } from './services/employee.se
                   type="text" 
                   placeholder="Buscar Empleado" 
                   class="grow" 
-                  [(ngModel)]="searchQuery"
-                  (ngModelChange)="filter()"
+                  [ngModel]="searchQuery()"
+                  (ngModelChange)="searchQuery.set($event)"
                 />
             </label>
-            <select class="select select-bordered w-40" [(ngModel)]="locationFilter" (ngModelChange)="filter()">
+            <select class="select select-bordered w-40" [ngModel]="locationFilter()" (ngModelChange)="locationFilter.set($event)">
               <option value="">Todas Sedes</option>
-              <option value="San Borja">San Borja</option>
-              <option value="Miraflores">Miraflores</option>
-              <option value="Surco">Surco</option>
+              @for (sede of configService.locations(); track sede.id) {
+                <option [value]="sede.name">{{ sede.name }}</option>
+              }
             </select>
           </div>
 
@@ -170,37 +171,198 @@ import { EmployeeService, Employee, AssignedAsset } from './services/employee.se
               <p class="text-sm text-gray-400 mt-2">Seleccione un empleado de la lista para ver sus detalles y activos.</p>
            </div>
         }
-
       </div>
+
+      <!-- Add Employee Modal -->
+      @if (showModal()) {
+        <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+              <h2 class="text-xl font-bold text-gray-800">Registrar Nuevo Empleado</h2>
+              <button class="btn btn-ghost btn-sm btn-circle" (click)="closeModal()">
+                <lucide-icon name="x" [size]="20"></lucide-icon>
+              </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto">
+              <form [formGroup]="employeeForm" class="grid grid-cols-2 gap-4">
+                
+                <div class="form-control">
+                  <label class="label">Codigo/DNI</label>
+                  <input type="text" formControlName="codigoEmpleado" class="input input-bordered" />
+                </div>
+
+                <div class="form-control">
+                  <label class="label">Nombres</label>
+                  <input type="text" formControlName="nombre" class="input input-bordered" />
+                </div>
+
+                <div class="form-control">
+                  <label class="label">Apellido Paterno</label>
+                  <input type="text" formControlName="apellidoPaterno" class="input input-bordered" />
+                </div>
+
+                <div class="form-control">
+                  <label class="label">Apellido Materno</label>
+                  <input type="text" formControlName="apellidoMaterno" class="input input-bordered" />
+                </div>
+
+                <div class="form-control">
+                  <label class="label">Email</label>
+                  <input type="email" formControlName="email" class="input input-bordered" />
+                </div>
+
+                <div class="form-control">
+                  <label class="label">Teléfono</label>
+                  <input type="text" formControlName="telefono" class="input input-bordered" />
+                </div>
+
+                <div class="form-control">
+                  <label class="label">Fecha Ingreso</label>
+                  <input type="date" formControlName="fechaIngreso" class="input input-bordered" />
+                </div>
+
+                <div class="form-control">
+                  <label class="label">Estado</label>
+                  <select formControlName="estadoEmpleadoId" class="select select-bordered">
+                    @for (status of configService.employeeStatuses(); track status.id) {
+                      <option [value]="status.id">{{ status.nombre }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-control">
+                  <label class="label">Area</label>
+                  <select formControlName="areaId" class="select select-bordered">
+                     @for (area of configService.areas(); track area.id) {
+                      <option [value]="area.id">{{ area.nombre }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-control">
+                  <label class="label">Puesto</label>
+                  <select formControlName="puestoId" class="select select-bordered">
+                     @for (puesto of configService.positions(); track puesto.id) {
+                      <option [value]="puesto.id">{{ puesto.nombre }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-control col-span-2">
+                  <label class="label">Sede</label>
+                  <select formControlName="sedeId" class="select select-bordered w-full">
+                     @for (sede of configService.locations(); track sede.id) {
+                      <option [value]="sede.id">{{ sede.name }}</option>
+                    }
+                  </select>
+                </div>
+
+              </form>
+            </div>
+
+            <div class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+              <button class="btn btn-ghost" (click)="closeModal()">Cancelar</button>
+              <button 
+                class="btn btn-primary text-white" 
+                [disabled]="employeeForm.invalid || isSubmitting()"
+                (click)="onSubmit()"
+              >
+                @if (isSubmitting()) {
+                  <span class="loading loading-spinner loading-sm"></span>
+                  Guardando...
+                } @else {
+                  Guardar Empleado
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `
 })
 export class EmpleadosComponent {
   private employeeService = inject(EmployeeService);
+  configService = inject(ConfigurationService); // Public for template
+  private fb = inject(FormBuilder);
 
-  searchQuery = '';
-  locationFilter = '';
+  searchQuery = signal('');
+  locationFilter = signal('');
+  showModal = signal(false);
+  isSubmitting = signal(false);
+
+  // Computed signal that reacts to changes in employees (service), search query, or location filter
+  filteredEmployees = computed(() => {
+    return this.employeeService.searchEmployees(this.searchQuery(), this.locationFilter());
+  });
 
   selectedEmployee = signal<Employee | null>(null);
-  filteredEmployees = signal<Employee[]>([]);
+
   assignedAssets = computed(() => {
     const emp = this.selectedEmployee();
     if (!emp) return [];
     return this.employeeService.getEmployeeAssets(emp.id);
   });
 
-  constructor() {
-    this.filter(); // Initial load
-  }
+  employeeForm = this.fb.group({
+    codigoEmpleado: ['', Validators.required],
+    nombre: ['', Validators.required],
+    apellidoPaterno: ['', Validators.required],
+    apellidoMaterno: [''],
+    email: ['', [Validators.required, Validators.email]],
+    telefono: [''],
+    fechaIngreso: [new Date().toISOString().split('T')[0], Validators.required],
+    estadoEmpleadoId: ['', Validators.required],
+    areaId: ['', Validators.required],
+    puestoId: ['', Validators.required],
+    sedeId: ['', Validators.required]
+  });
 
-  filter() {
-    this.filteredEmployees.set(
-      this.employeeService.searchEmployees(this.searchQuery, this.locationFilter)
-    );
+  constructor() {
+    // No explicit filter call needed, computed handles it
   }
 
   selectEmployee(emp: Employee) {
     this.selectedEmployee.set(emp);
+  }
+
+  openModal() {
+    this.showModal.set(true);
+  }
+
+  closeModal() {
+    this.showModal.set(false);
+    this.employeeForm.reset({
+      fechaIngreso: new Date().toISOString().split('T')[0]
+    });
+  }
+
+  onSubmit() {
+    if (this.employeeForm.valid) {
+      this.isSubmitting.set(true);
+      const val = this.employeeForm.value;
+      // Convert IDs to numbers where needed
+      const payload = {
+        ...val,
+        estadoEmpleadoId: Number(val.estadoEmpleadoId),
+        areaId: Number(val.areaId),
+        puestoId: Number(val.puestoId),
+        sedeId: Number(val.sedeId)
+      };
+
+      this.employeeService.addEmployee(payload).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.closeModal();
+          // Filter is computed, no manual refresh needed
+        },
+        error: (err) => {
+          console.error('Error creating employee', err);
+          this.isSubmitting.set(false);
+        }
+      });
+    }
   }
 
   getInitials(name: string): string {

@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 export interface AssignedAsset {
@@ -26,9 +27,6 @@ export interface Employee {
   status: 'active' | 'terminated';
 }
 
-@Injectable({
-  providedIn: 'root'
-})
 @Injectable({
   providedIn: 'root'
 })
@@ -70,8 +68,13 @@ export class EmployeeService {
     return this._assets()[employeeId] || [];
   }
 
-  addEmployee(employee: Omit<Employee, 'id'>) {
-    // API Call would go here
+  addEmployee(employee: any): Observable<Employee> {
+    return this.http.post<any>(`${this.apiUrl}/empleados`, employee).pipe(
+      map(response => this.mapApiToEmployee(response)),
+      tap(newEmp => {
+         this._employees.update(current => [...current, newEmp]);
+      })
+    );
   }
 
   private mapApiToEmployee(apiEmp: any): Employee {

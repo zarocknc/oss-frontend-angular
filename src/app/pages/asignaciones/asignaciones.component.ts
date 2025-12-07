@@ -1,13 +1,11 @@
 import { Component, OnInit, inject, CUSTOM_ELEMENTS_SCHEMA, PLATFORM_ID, AfterViewInit } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common'; // Necesario para *ngIf, *ngFor
-import { FormsModule } from '@angular/forms'; // Necesario para [(ngModel)]
-import { LucideAngularModule } from 'lucide-angular'; // Para los iconos
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 
-// Importaciones locales
-import { Colaborador } from './interfaces/colaborador.interface';
 import { Activo } from './interfaces/activo.interface';
-import { ColaboradorService } from './services/colaborador.service';
 import { ActivoService } from './services/activo.service';
+import { EmployeeService, Employee } from '../empleados/services/employee.service';
 
 @Component({
   selector: 'app-asignaciones',
@@ -15,17 +13,15 @@ import { ActivoService } from './services/activo.service';
   imports: [
     CommonModule,
     FormsModule,
-    LucideAngularModule // Asegúrate de importar esto
+    LucideAngularModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asignaciones.component.html',
 })
 export class AsignacionesComponent implements OnInit, AfterViewInit {
 
-  // === Inyección de Dependencias (Estilo moderno) ===
-  // Esto es como Angular "entrega" los servicios al componente
-  private colaboradorService = inject(ColaboradorService);
   private activoService = inject(ActivoService);
+  private employeeService = inject(EmployeeService);
   private platformId = inject(PLATFORM_ID);
 
   // === Estado del Componente ===
@@ -35,7 +31,7 @@ export class AsignacionesComponent implements OnInit, AfterViewInit {
   public fechaAsignacion: string = new Date().toISOString().split('T')[0];
 
   // Resultados
-  public colaborador: Colaborador | null = null;
+  public colaborador: Employee | null = null;
   public activosDisponibles: Activo[] = [];
   public activoSeleccionado: Activo | null = null;
 
@@ -54,12 +50,12 @@ export class AsignacionesComponent implements OnInit, AfterViewInit {
   public currentPage: number = 1;
   public itemsPerPage: number = 5;
   public totalItems: number = 0;
-  public Math = Math; // Expose Math to template
+  public Math = Math; 
 
   // Mock Data for Modal
-  public allModalData: Activo[] = []; // All mock data
-  public filteredModalData: Activo[] = []; // Filtered data
-  public paginatedModalData: Activo[] = []; // Current page data
+  public allModalData: Activo[] = []; 
+  public filteredModalData: Activo[] = []; 
+  public paginatedModalData: Activo[] = []; 
 
   ngOnInit(): void {
     this.generateMockData();
@@ -108,7 +104,6 @@ export class AsignacionesComponent implements OnInit, AfterViewInit {
       const matchTipo = !this.modalFilters.tipo || item.tipoEquipo === this.modalFilters.tipo;
       const matchSerie = !this.modalFilters.serie || item.serie.toLowerCase().includes(this.modalFilters.serie.toLowerCase());
       const matchEstado = !this.modalFilters.estado || item.estado === this.modalFilters.estado;
-      // Mock Almacen filter (ignoring for now as Activo doesn't have Almacen property yet, or assuming all are in same)
       return matchTipo && matchSerie && matchEstado;
     });
     this.totalItems = this.filteredModalData.length;
@@ -129,7 +124,6 @@ export class AsignacionesComponent implements OnInit, AfterViewInit {
 
   selectActivoFromModal(activo: Activo): void {
     this.activoSeleccionado = activo;
-    // Optionally add to activosDisponibles if not present
     if (!this.activosDisponibles.find(a => a.id === activo.id)) {
       this.activosDisponibles = [activo, ...this.activosDisponibles];
     }
@@ -146,16 +140,26 @@ export class AsignacionesComponent implements OnInit, AfterViewInit {
     this.colaborador = null;
     this.activosDisponibles = [];
 
-    this.colaboradorService.buscarColaborador(this.searchDni, this.searchCorreo)
-      .subscribe(colab => {
-        this.colaborador = colab;
-        this.isLoadingSearch = false;
+    // Search in the signal from EmployeeService
+    const employees = this.employeeService.employees();
+    const found = employees.find(e => 
+      (this.searchDni && e.dni === this.searchDni) ||
+      (this.searchCorreo && e.email.toLowerCase() === this.searchCorreo.toLowerCase())
+    );
 
-        // Si encontramos un colaborador, buscamos activos para su perfil
-        if (colab) {
-          this.cargarActivosDisponibles(colab.perfil);
-        }
-      });
+    // Simulate delay for UX or just set immediately
+    setTimeout(() => {
+      this.colaborador = found || null;
+      this.isLoadingSearch = false;
+
+      if (this.colaborador) {
+        this.cargarActivosDisponibles(this.colaborador.profile || 'Estándar');
+        // Clear inputs if needed, or keep for context
+      } else {
+        // Optional: toast or alert
+        console.warn('Colaborador no encontrado');
+      }
+    }, 500); 
   }
 
   cargarActivosDisponibles(perfil: string): void {
@@ -186,7 +190,7 @@ export class AsignacionesComponent implements OnInit, AfterViewInit {
     }
 
     console.log('--- Asignación Creada (Mock) ---');
-    console.log('Colaborador:', this.colaborador.nombres);
+    console.log('Colaborador:', this.colaborador.name);
     console.log('Activo:', this.activoSeleccionado.serie);
     console.log('Fecha:', this.fechaAsignacion);
 

@@ -55,7 +55,7 @@
             </label>
             <input type="text"
               class="input input-bordered bg-base-100 focus:ring-2 focus:ring-primary/20 w-full sm:w-40 transition-all"
-              placeholder="12345678" [(ngModel)]="searchDni" />
+              placeholder="12345678" [(ngModel)]="searchDni" (keyup.enter)="buscarColaborador()" />
           </div>
 
           <div class="form-control w-full sm:w-auto flex-1 flex flex-col">
@@ -64,7 +64,7 @@
             </label>
             <input type="email"
               class="input input-bordered bg-base-100 focus:ring-2 focus:ring-primary/20 w-full transition-all"
-              placeholder="correo@empresa.com" [(ngModel)]="searchCorreo" />
+              placeholder="correo@empresa.com" [(ngModel)]="searchCorreo" (keyup.enter)="buscarColaborador()" />
           </div>
 
           <button class="btn btn-primary text-white px-8 shadow-sm" (click)="buscarColaborador()"
@@ -121,19 +121,19 @@
             <div class="space-y-3 text-sm" *ngIf="colaborador; else noColaborador">
               <div class="grid grid-cols-[80px_1fr] gap-2 items-center">
                 <span class="font-semibold text-base-content/60">Nombre :</span>
-                <span class="font-medium text-base-content">{{ colaborador.nombres }} {{ colaborador.apellidos }}</span>
+                <span class="font-medium text-base-content">{{ colaborador.name }}</span>
 
                 <span class="font-semibold text-base-content/60">Puesto :</span>
-                <span class="badge badge-ghost badge-sm">{{ colaborador.puesto }}</span>
+                <span class="badge badge-ghost badge-sm">{{ colaborador.position }}</span>
 
                 <span class="font-semibold text-base-content/60">Perfil :</span>
-                <span class="font-medium text-base-content">{{ colaborador.perfil }}</span>
+                <span class="font-medium text-base-content">{{ colaborador.profile }}</span>
 
                 <span class="font-semibold text-base-content/60">Area :</span>
                 <span class="font-medium text-base-content">{{ colaborador.area }}</span>
 
                 <span class="font-semibold text-base-content/60">Sede :</span>
-                <span class="font-medium text-base-content">{{ colaborador.sede }}</span>
+                <span class="font-medium text-base-content">{{ colaborador.location }}</span>
               </div>
 
               <div class="card-actions justify-end mt-6 pt-4 border-t border-base-200">

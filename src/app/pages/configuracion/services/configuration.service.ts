@@ -47,6 +47,9 @@ export class ConfigurationService {
   users = signal<UserConfig[]>([]);
   locations = signal<LocationConfig[]>([]);
   assetTypes = signal<AssetTypeConfig[]>([]);
+  areas = signal<any[]>([]); // simplified type for now or add interface
+  positions = signal<any[]>([]);
+  employeeStatuses = signal<any[]>([]);
 
   generalParams = signal<GeneralParams>({
     systemName: 'Sistema de Gestión de Activos TI',
@@ -97,6 +100,24 @@ export class ConfigurationService {
     ).subscribe({
       next: (data: AssetTypeConfig[]) => this.assetTypes.set(data),
       error: (e: unknown) => console.error('Error loading asset types', e)
+    });
+
+    // Load Areas
+    this.http.get<any[]>(`${this.apiUrl}/catalogos/areas`).subscribe({
+      next: (data) => this.areas.set(data),
+      error: (e) => console.error('Error loading areas', e)
+    });
+
+    // Load Puestos
+    this.http.get<any[]>(`${this.apiUrl}/catalogos/puestos`).subscribe({
+      next: (data) => this.positions.set(data),
+      error: (e) => console.error('Error loading positions', e)
+    });
+
+    // Load Employee Statuses
+    this.http.get<any[]>(`${this.apiUrl}/catalogos/estados-empleado`).subscribe({
+      next: (data) => this.employeeStatuses.set(data),
+      error: (e) => console.error('Error loading employee statuses', e)
     });
   }
 
