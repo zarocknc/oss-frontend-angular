@@ -26,6 +26,18 @@ export interface InventoryAsset {
   bookValue?: string; // Valor Contable
 }
 
+export interface DispositivoEstadoRequest {
+  estadoId: number;
+  observacion: string;
+}
+
+export const ASSET_STATUS_MAP: Record<AssetStatus, number> = {
+  'Disponible': 1,
+  'Asignado': 2,
+  'En mantenimiento': 3,
+  'Baja': 4
+};
+
 @Injectable({
   providedIn: 'root'
 })
@@ -64,14 +76,38 @@ export class InventoryService {
   });
 
   updateAssetStatus(id: string, newStatus: AssetStatus, observation: string) {
-    // In a real app we'd call the API to update status
-    // For now update local state to reflect UI change optimistically
-     this._assets.update(items => items.map(a => {
-        if (a.id === id) {
-            return { ...a, status: newStatus, observation: observation || a.observation };
-        }
-        return a;
-    }));
+    const statusId = ASSET_STATUS_MAP[newStatus];
+    if (!statusId) {
+      console.error(`Status ID not found for ${newStatus}`);
+      return;
+    }
+
+    const payload: DispositivoEstadoRequest = {
+      estadoId: statusId,
+      observacion: observation
+    };
+
+    this.http.patch(`${this.apiUrl}/dispositivos/${id}/estado`, payload).subscribe({
+      next: () => {
+        // Optimistic update
+        this._assets.update(items => items.map(a => {
+          if (a.id === id) {
+            return { 
+              ...a, 
+              status: newStatus, 
+              observation: observation || a.observation 
+            };
+          }
+          return a;
+        }));
+      },
+      error: (err) => {
+        console.error('Error updating asset status', err);
+        // Here we could revert the optimistic update if we had applied it before the request
+        // Since we apply it in 'next', no revert needed, but user sees no change if fails.
+        // Ideally show a toast/alert.
+      }
+    });
   }
 
   addAssets(newAssets: InventoryAsset[]) {

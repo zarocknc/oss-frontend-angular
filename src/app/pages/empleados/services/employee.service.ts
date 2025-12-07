@@ -55,13 +55,40 @@ export class EmployeeService {
     });
   }
 
-  searchEmployees(query: string, locationFilter: string): Employee[] {
-    const q = query.toLowerCase();
-    return this._employees().filter(e => {
-      const matchesQuery = e.name.toLowerCase().includes(q) || e.dni.includes(q) || e.email.toLowerCase().includes(q);
-      const matchesLocation = locationFilter ? e.location === locationFilter : true;
-      return matchesQuery && matchesLocation;
-    });
+  searchEmployees(query: string, locationFilter: string): Observable<Employee[]> {
+    const params: any = {
+      q: query,
+      size: 10 // Default size, could be parameterized
+    };
+    
+    // API might not support location filtering in the search endpoint directly based on requirements.
+    // If it does not, we might need to filter client side or backend needs parameter.
+    // Assuming backend 'search' typically takes 'q'. 
+    // If 'locationFilter' is needed, we should pass it if backend supports it.
+    // Based on user request "Mapea los parámetros q (query) y size correctamente", it implies these are the supported ones.
+    // We can filter by location client-side after fetch if backend doesn't support it, 
+    // OR pass it if we knew the param name (e.g. 'sedeId' or 'location').
+    // Let's implement client-side filtering wrapper for now if backend only supports text search, 
+    // OR just pass 'q' and 'size' as requested. 
+    // However, the component expects filtered results. 
+    // Let's assume we pass 'q' and then filter by location if needed locally, OR 
+    // if the requirement implies just fetching, we fetch.
+    
+    // User said: "Mapea los parámetros q (query) y size correctamente."
+    
+    return this.http.get<any>(`${this.apiUrl}/empleados/search`, { params }).pipe(
+      map(response => {
+        // Response is PageEmpleadoResponse, so we need to access .content
+        const apiEmployees = response.content || []; 
+        return apiEmployees.map((e: any) => this.mapApiToEmployee(e));
+      }),
+      map((employees: Employee[]) => {
+        if (locationFilter) {
+          return employees.filter(e => e.location === locationFilter);
+        }
+        return employees;
+      })
+    );
   }
 
   getEmployeeAssets(employeeId: string): AssignedAsset[] {

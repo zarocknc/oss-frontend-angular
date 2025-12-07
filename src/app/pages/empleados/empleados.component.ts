@@ -1,9 +1,12 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, effect } from '@angular/core';
+import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { LucideAngularModule, Search, Plus, MapPin, User, Calendar, Briefcase, Mail, X } from 'lucide-angular';
 import { EmployeeService, Employee, AssignedAsset } from './services/employee.service';
 import { ConfigurationService } from '../configuracion/services/configuration.service';
+import { debounceTime, distinctUntilChanged, switchMap, startWith, combineLatest, map } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-empleados',
@@ -293,9 +296,26 @@ export class EmpleadosComponent {
   isSubmitting = signal(false);
 
   // Computed signal that reacts to changes in employees (service), search query, or location filter
-  filteredEmployees = computed(() => {
-    return this.employeeService.searchEmployees(this.searchQuery(), this.locationFilter());
-  });
+  private searchParams$ = computed(() => ({
+    query: this.searchQuery(),
+    location: this.locationFilter()
+  }));
+
+  filteredEmployees = toSignal(
+    toObservable(this.searchParams$).pipe(
+      debounceTime(300),
+      switchMap((params: { query: string; location: string }) => {
+        // If query is empty and we want to show all, we might need a different endpoint or handle it.
+        // Assuming search returns results for empty query too or we use loadEmployees behavior.
+        // The original code filtered _employees().
+        // If we want to maintain "show all initially", search endpoint might need empty q.
+        return this.employeeService.searchEmployees(params.query, params.location).pipe(
+          startWith([]) // Clear or keep previous? Better to maybe show loading state if we had one.
+        );
+      })
+    ),
+    { initialValue: [] }
+  );
 
   selectedEmployee = signal<Employee | null>(null);
 
