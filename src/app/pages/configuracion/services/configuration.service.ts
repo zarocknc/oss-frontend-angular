@@ -1,4 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 export interface UserConfig {
   id: string;
@@ -33,45 +36,81 @@ export interface GeneralParams {
 @Injectable({
   providedIn: 'root'
 })
+@Injectable({
+  providedIn: 'root'
+})
 export class ConfigurationService {
+  private http = inject(HttpClient);
+  private apiUrl = environment.apiUrl;
 
   // Signals for state
-  users = signal<UserConfig[]>([
-    { id: '1', name: 'JULIO DIAZ MEMO', email: 'JULIO.D.@EMPRESA.PE', role: 'ADMINISTRADOR', status: 'ACTIVO' },
-    { id: '2', name: 'MARIA PEREZ', email: 'MARIA.P.@EMPRESA.PE', role: 'GESTOR DE ACTIVOS', status: 'ACTIVO' }
-  ]);
-
-  locations = signal<LocationConfig[]>([
-    { id: '1', name: 'SAN BORJA', warehouseName: 'ALMACÉN CENTRAL', type: 'Central', address: 'Av. Javier Prado 123', responsible: 'Juan Perez', internalCode: 'SB-001' },
-    { id: '2', name: 'MIRAFLORES', warehouseName: 'ALMACÉN MIRAFLORES', type: 'Secundario', address: 'Calle Shell 456', responsible: 'Ana Gomez', internalCode: 'MF-001' }
-  ]);
-
-  assetTypes = signal<AssetTypeConfig[]>([
-    { id: '1', name: 'Laptop', description: 'Computadoras portátiles' },
-    { id: '2', name: 'Monitor', description: 'Pantallas externas' },
-    { id: '3', name: 'Teléfono', description: 'Teléfonos IP' },
-    { id: '4', name: 'Impresora', description: 'Dispositivos de impresión' }
-  ]);
+  users = signal<UserConfig[]>([]);
+  locations = signal<LocationConfig[]>([]);
+  assetTypes = signal<AssetTypeConfig[]>([]);
 
   generalParams = signal<GeneralParams>({
     systemName: 'Sistema de Gestión de Activos TI',
     companyName: 'Mi Empresa S.A.C.'
   });
 
+  constructor() {
+    this.loadReferenceData();
+  }
+
+  loadReferenceData() {
+    // Load Users
+    this.http.get<any[]>(`${this.apiUrl}/usuarios`).pipe(
+      map((users: any[]) => users.map((u: any) => ({
+        id: u.id.toString(),
+        name: u.nombreCompleto || u.username,
+        email: u.email,
+        role: 'ADMINISTRADOR', // Default
+        status: u.activo ? 'ACTIVO' : 'INACTIVO'
+      } as UserConfig)))
+    ).subscribe({
+      next: (data: UserConfig[]) => this.users.set(data),
+      error: (e: unknown) => console.error('Error loading users', e)
+    });
+
+    // Load Locations (Sedes)
+    this.http.get<any[]>(`${this.apiUrl}/catalogos/sedes`).pipe(
+      map((sedes: any[]) => sedes.map((s: any) => ({
+        id: s.id.toString(),
+        name: s.nombre,
+        warehouseName: `Almacén ${s.nombre}`,
+        type: 'Secundario', // Default
+        address: s.direccion,
+        internalCode: s.codigo
+      } as LocationConfig)))
+    ).subscribe({
+      next: (data: LocationConfig[]) => this.locations.set(data),
+      error: (e: unknown) => console.error('Error loading locations', e)
+    });
+
+    // Load Asset Types
+    this.http.get<any[]>(`${this.apiUrl}/catalogos/tipos-dispositivo`).pipe(
+      map((types: any[]) => types.map((t: any) => ({
+        id: t.id.toString(),
+        name: t.nombre,
+        description: t.descripcion
+      } as AssetTypeConfig)))
+    ).subscribe({
+      next: (data: AssetTypeConfig[]) => this.assetTypes.set(data),
+      error: (e: unknown) => console.error('Error loading asset types', e)
+    });
+  }
+
   // Methods
   addUser(user: Omit<UserConfig, 'id'>) {
-    const newId = (this.users().length + 1).toString();
-    this.users.update(list => [...list, { ...user, id: newId }]);
+     // TODO: Implement API post
   }
 
   addLocation(loc: Omit<LocationConfig, 'id'>) {
-     const newId = (this.locations().length + 1).toString();
-     this.locations.update(list => [...list, { ...loc, id: newId }]);
+     // TODO: Implement API post
   }
 
   addAssetType(type: Omit<AssetTypeConfig, 'id'>) {
-      const newId = (this.assetTypes().length + 1).toString();
-      this.assetTypes.update(list => [...list, { ...type, id: newId }]);
+      // TODO: Implement API post
   }
 
   updateGeneralParams(params: GeneralParams) {

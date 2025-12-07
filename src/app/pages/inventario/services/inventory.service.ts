@@ -1,4 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 export type AssetStatus = 'Disponible' | 'Asignado' | 'En mantenimiento' | 'Baja';
 
@@ -27,96 +30,27 @@ export interface InventoryAsset {
   providedIn: 'root'
 })
 export class InventoryService {
+  private http = inject(HttpClient);
+  private apiUrl = environment.apiUrl;
 
-  private _assets = signal<InventoryAsset[]>([
-    {
-      id: '1',
-      assignmentId: '101',
-      alm: 'SAN BORJA',
-      type: 'LAPTOP',
-      brand: 'LENOVO',
-      model: 'T440',
-      series: '6TR7333',
-      invCode: '00933',
-      cmdbCode: 'NUEVO',
-      status: 'Asignado',
-      observation: 'CON DESGASTE',
-      processor: 'Core i7',
-      ram: '16GB',
-      age: '4 años',
-      currentLocation: 'San Borja',
-      bookValue: 'S/. 2.000'
-    },
-    {
-      id: '2',
-      alm: 'SAN BORJA',
-      type: 'LAPTOP',
-      brand: 'LENOVO',
-      model: 'T440',
-      series: '6TR7334',
-      invCode: '00934',
-      cmdbCode: 'NUEVO',
-      status: 'Disponible',
-      observation: 'BUEN ESTADO',
-      processor: 'Core i5',
-      ram: '8GB',
-      age: '3 años',
-      currentLocation: 'Almacén Central',
-      bookValue: 'S/. 1.500'
-    },
-    {
-      id: '3',
-      alm: 'SAN BORJA',
-      type: 'LAPTOP',
-      brand: 'LENOVO',
-      model: 'T440',
-      series: '6TR7335',
-      invCode: '00935',
-      cmdbCode: 'NUEVO',
-      status: 'En mantenimiento',
-      observation: 'FALLA DE PANTALLA',
-      processor: 'Core i7',
-      ram: '16GB',
-      age: '4 años',
-      currentLocation: 'Servicio Técnico',
-      bookValue: 'S/. 1.800'
-    },
-    {
-      id: '4',
-      alm: 'SAN BORJA',
-      type: 'LAPTOP',
-      brand: 'LENOVO',
-      model: 'T440',
-      series: '6TR7336',
-      invCode: '00936',
-      cmdbCode: 'NUEVO',
-      status: 'Baja',
-      observation: 'OBSOLETO',
-      processor: 'Core i3',
-      ram: '4GB',
-      age: '6 años',
-      currentLocation: 'Almacén de Baja',
-      bookValue: 'S/. 0'
-    },
-    // Adding more mock data to fill the table slightly
-    {
-        id: '5',
-        alm: 'MIRAFLORES',
-        type: 'MONITOR',
-        brand: 'DELL',
-        model: 'P2419H',
-        series: 'CN-0D',
-        invCode: '00940',
-        cmdbCode: 'NUEVO',
-        status: 'Asignado',
-        assignmentId: '103',
-        observation: '',
-        age: '2 años',
-        bookValue: 'S/. 600'
-    }
-  ]);
-
+  // We can expose a readonly signal if components expect it, 
+  // or switch components to use Observables/Resource API.
+  // For now, let's keep the signal but populate it from API
+  private _assets = signal<InventoryAsset[]>([]);
   assets = this._assets.asReadonly();
+
+  constructor() {
+    this.loadAssets();
+  }
+
+  loadAssets() {
+    this.http.get<any[]>(`${this.apiUrl}/dispositivos`).pipe(
+      map((apiAssets: any[]) => apiAssets.map((a: any) => this.mapApiToInventoryAsset(a)))
+    ).subscribe({
+      next: (data: InventoryAsset[]) => this._assets.set(data),
+      error: (e: unknown) => console.error('Error loading assets', e)
+    });
+  }
 
   // KPIs
   stats = computed(() => {
@@ -130,7 +64,9 @@ export class InventoryService {
   });
 
   updateAssetStatus(id: string, newStatus: AssetStatus, observation: string) {
-    this._assets.update(items => items.map(a => {
+    // In a real app we'd call the API to update status
+    // For now update local state to reflect UI change optimistically
+     this._assets.update(items => items.map(a => {
         if (a.id === id) {
             return { ...a, status: newStatus, observation: observation || a.observation };
         }
@@ -139,12 +75,34 @@ export class InventoryService {
   }
 
   addAssets(newAssets: InventoryAsset[]) {
-    this._assets.update(current => [...current, ...newAssets]);
+    // This would need a proper API endpoint for bulk creation or loop
+    // For now, just a placeholder or single create if needed
+    // this._assets.update(current => [...current, ...newAssets]);
   }
 
   getNextId(): string {
-      const ids = this._assets().map(a => parseInt(a.id)).filter(n => !isNaN(n));
-      const max = ids.length > 0 ? Math.max(...ids) : 0;
-      return (max + 1).toString();
+     // Not relevant if backend handles IDs
+      return "0";
+  }
+
+  private mapApiToInventoryAsset(apiAsset: any): InventoryAsset {
+    return {
+      id: apiAsset.id.toString(),
+      assignmentId: undefined, // Needs logic to fetch active assignment id if needed?
+      alm: apiAsset.sede?.nombre || 'Desconocido',
+      type: apiAsset.tipoDispositivo?.nombre || 'Otro',
+      brand: apiAsset.marca?.nombre || 'Generico',
+      model: apiAsset.modelo,
+      series: apiAsset.numeroSerie,
+      invCode: apiAsset.codigoActivo,
+      cmdbCode: 'N/A', // Not in API response example
+      status: apiAsset.estadoDispositivo?.nombre as AssetStatus || 'Disponible',
+      observation: apiAsset.observaciones || '',
+      processor: 'N/A', 
+      ram: 'N/A',
+      age: apiAsset.antiguedadEnAnios ? `${apiAsset.antiguedadEnAnios} años` : '0 años',
+      currentLocation: apiAsset.sede?.nombre,
+      bookValue: apiAsset.valorAdquisicion ? `S/. ${apiAsset.valorAdquisicion}` : 'S/. 0'
+    };
   }
 }

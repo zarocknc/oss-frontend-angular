@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { switchMap } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 export interface Employee {
   id: string;
@@ -39,7 +40,7 @@ export interface ReplacementRecord {
 })
 export class ReplacementService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/v1';
+  private apiUrl = environment.apiUrl;
 
   // Mock Data (Kept for UI population if needed, but actions are now API driven)
   private _employees = signal<Employee[]>([

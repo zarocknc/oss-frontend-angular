@@ -65,7 +65,8 @@
               "buildTarget": "oss-new:build:production"
             },
             "development": {
-              "buildTarget": "oss-new:build:development"
+              "buildTarget": "oss-new:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

@@ -1,4 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 export interface AssignedAsset {
   id: string;
@@ -26,59 +29,33 @@ export interface Employee {
 @Injectable({
   providedIn: 'root'
 })
+@Injectable({
+  providedIn: 'root'
+})
 export class EmployeeService {
-  
-  private _employees = signal<Employee[]>([
-    { 
-      id: '1', 
-      dni: '46787632', 
-      name: 'Ana Gomez', 
-      email: 'ana.gomez@empresa.pe', 
-      position: 'Analista TI', 
-      area: 'Oper. TI', 
-      location: 'San Borja', 
-      startDate: '2008-12-23', 
-      profile: 'Empleado',
-      status: 'active'
-    },
-    { 
-      id: '2', 
-      dni: '42345678', 
-      name: 'Carlos Perez', 
-      email: 'carlos.perez@empresa.pe', 
-      position: 'Desarrollador', 
-      area: 'Desarrollo', 
-      location: 'Miraflores', 
-      startDate: '2015-05-10', 
-      profile: 'Empleado',
-      status: 'active'
-    },
-    { 
-      id: '3', 
-      dni: '12345678', 
-      name: 'Maria Rodriguez', 
-      email: 'maria.rodriguez@empresa.pe', 
-      position: 'Analista QA', 
-      area: 'Calidad', 
-      location: 'San Borja', 
-      startDate: '2020-01-15', 
-      profile: 'Externo',
-      status: 'active'
-    },
-  ]);
+  private http = inject(HttpClient);
+  private apiUrl = environment.apiUrl;
 
-  // Mock Asset Assignments
-  private _assets = signal<{ [employeeId: string]: AssignedAsset[] }>({
-    '1': [
-      { id: 'l1', type: 'Laptop', model: 'Probook 440 g8', series: '5CD274YHRR', state: 'Usado', gama: 'Gama A' },
-      { id: 'm1', type: 'Monitor', model: 'Dell P2419H', series: 'CN-0D', state: 'Usado', gama: 'Gama B' }
-    ],
-    '2': [
-      { id: 'l2', type: 'Laptop', model: 'MacBook Pro', series: 'FVFX...', state: 'Nuevo', gama: 'Gama A+' }
-    ]
-  });
-
+  private _employees = signal<Employee[]>([]);
   employees = this._employees.asReadonly();
+  
+  // Mock Asset Assignments - keeping this mock for now as it requires a separate endpoint logic 
+  // or chaining to get assigned assets for all employees, which might be heavy.
+  // Ideally, this should be fetched on demand per employee or via a composite endpoint.
+  private _assets = signal<{ [employeeId: string]: AssignedAsset[] }>({});
+
+  constructor() {
+    this.loadEmployees();
+  }
+
+  loadEmployees() {
+    this.http.get<any[]>(`${this.apiUrl}/empleados`).pipe(
+      map((apiEmployees: any[]) => apiEmployees.map((e: any) => this.mapApiToEmployee(e)))
+    ).subscribe({
+      next: (data: Employee[]) => this._employees.set(data),
+      error: (e: unknown) => console.error('Error loading employees', e)
+    });
+  }
 
   searchEmployees(query: string, locationFilter: string): Employee[] {
     const q = query.toLowerCase();
@@ -94,7 +71,21 @@ export class EmployeeService {
   }
 
   addEmployee(employee: Omit<Employee, 'id'>) {
-    const newEmp = { ...employee, id: Math.random().toString(36).substr(2, 9) };
-    this._employees.update(list => [...list, newEmp]);
+    // API Call would go here
+  }
+
+  private mapApiToEmployee(apiEmp: any): Employee {
+      return {
+          id: apiEmp.id.toString(),
+          dni: apiEmp.codigoEmpleado, // Assuming code is used as DNI/Identifier or we need a DNI field? API has 'codigoEmpleado'
+          name: `${apiEmp.nombre} ${apiEmp.apellidoPaterno} ${apiEmp.apellidoMaterno || ''}`.trim(),
+          email: apiEmp.email || '',
+          position: apiEmp.puesto?.nombre || 'Desconocido',
+          area: apiEmp.area?.nombre || 'Desconocido',
+          location: apiEmp.sede?.nombre || 'Desconocido',
+          startDate: apiEmp.fechaIngreso,
+          profile: 'Empleado', // Defaulting as API doesn't seem to have profile type explicitly in response yet or it's 'estado'?
+          status: apiEmp.estadoEmpleado?.nombre === 'Activo' ? 'active' : 'terminated'
+      };
   }
 }

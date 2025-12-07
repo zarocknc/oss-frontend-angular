@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { switchMap, map } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 export type TerminationStatus = 'En Proceso' | 'Pendiente' | 'Finalizado';
 
@@ -34,7 +35,7 @@ import { signal } from '@angular/core';
 })
 export class OffboardingService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/v1';
+  private apiUrl = environment.apiUrl;
 
   // State signal to keep UI happy (mocked or empty for now)
   private _processes = signal<TerminationProcess[]>([]);

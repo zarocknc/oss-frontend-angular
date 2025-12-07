@@ -1,38 +1,33 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 import { Activo } from '../interfaces/activo.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ActivoService {
+  private http = inject(HttpClient);
+  private apiUrl = environment.apiUrl;
 
   constructor() { }
 
-  // Mockup para obtener activos disponibles
   getActivosDisponibles(perfil: string): Observable<Activo[]> {
-    
-    // Lógica simulada: el perfil 'Finanzas' requiere gama 'Media' o 'Alta'
-    // El gestor hacía esto manualmente [Flujos.pdf source 2]
-    
-    const mockActivos: Activo[] = [
-      {
-        id: 'act_001', serie: 'SN-A90FGG', codigoInventario: 'INV-1001',
-        tipoEquipo: 'Laptop', marca: 'Lenovo', modelo: 'ThinkPad T14',
-        estado: 'Disponible', gama: 'Media'
-      },
-      {
-        id: 'act_002', serie: 'SN-B87HSA', codigoInventario: 'INV-1002',
-        tipoEquipo: 'Laptop', marca: 'Dell', modelo: 'XPS 15',
-        estado: 'Disponible', gama: 'Alta'
-      },
-      {
-        id: 'act_003', serie: 'SN-C12FRA', codigoInventario: 'INV-1003',
-        tipoEquipo: 'Laptop', marca: 'HP', modelo: 'ProBook 440',
-        estado: 'Disponible', gama: 'Media'
-      }
-    ];
-
-    return of(mockActivos);
+    // 'perfil' logic was simulated filtering, backend might handle this or we filter client-side 
+    // For now getting all available assets
+    return this.http.get<any[]>(`${this.apiUrl}/dispositivos/disponibles`).pipe(
+        map((assets: any[]) => assets.map((a: any) => ({
+            id: a.id.toString(),
+            serie: a.numeroSerie,
+            codigoInventario: a.codigoActivo,
+            tipoEquipo: a.tipoDispositivo?.nombre || 'Desconocido',
+            marca: a.marca?.nombre || 'Generico',
+            modelo: a.modelo,
+            estado: a.estadoDispositivo?.nombre || 'Disponible',
+            gama: 'Media' // API doesn't have gama yet, default to 'Media'
+        } as Activo)))
+    );
   }
 }
