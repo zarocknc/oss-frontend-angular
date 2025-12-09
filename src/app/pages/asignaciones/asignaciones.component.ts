@@ -2,10 +2,12 @@ import { Component, OnInit, inject, CUSTOM_ELEMENTS_SCHEMA, PLATFORM_ID, AfterVi
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
+import { lastValueFrom } from 'rxjs'; // Import for better async handling
 
 import { Activo } from './interfaces/activo.interface';
 import { ActivoService } from './services/activo.service';
 import { EmployeeService, Employee } from '../empleados/services/employee.service';
+import { AsignacionService, AsignacionRequest } from './services/asignacion.service'; // Import new service
 
 @Component({
   selector: 'app-asignaciones',
@@ -22,6 +24,7 @@ export class AsignacionesComponent implements OnInit, AfterViewInit {
 
   private activoService = inject(ActivoService);
   private employeeService = inject(EmployeeService);
+  private asignacionService = inject(AsignacionService); // Inject service
   private platformId = inject(PLATFORM_ID);
 
   // === Estado del Componente ===
@@ -36,6 +39,15 @@ export class AsignacionesComponent implements OnInit, AfterViewInit {
   public activoSeleccionado: Activo | null = null;
 
   public isLoadingSearch: boolean = false;
+  
+  // Loading state for save button
+  // Loading state for save button
+  public isSaving: boolean = false; 
+
+  // === Tabs State ===
+  public activeTab: 'nuevo' | 'historial' = 'nuevo';
+  public historialAsignaciones: any[] = [];
+  public isLoadingHistorial: boolean = false;
 
   // === Modal State ===
   public showModal: boolean = false;
@@ -59,6 +71,27 @@ export class AsignacionesComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.generateMockData();
+  }
+
+  setActiveTab(tab: 'nuevo' | 'historial'): void {
+    this.activeTab = tab;
+    if (tab === 'historial') {
+      this.loadHistorial();
+    }
+  }
+
+  loadHistorial(): void {
+    this.isLoadingHistorial = true;
+    this.asignacionService.getHistorial().subscribe({
+      next: (data) => {
+        this.historialAsignaciones = data;
+        this.isLoadingHistorial = false;
+      },
+      error: (err) => {
+        console.error('Error cargando historial', err);
+        this.isLoadingHistorial = false;
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -181,25 +214,39 @@ export class AsignacionesComponent implements OnInit, AfterViewInit {
     this.searchDni = '';
     this.searchCorreo = '';
     this.fechaAsignacion = new Date().toISOString().split('T')[0];
+    this.isSaving = false;
   }
 
-  asignarYGuardar(): void {
+  asignarYGuardar(): void { // No async here to fit Angular structure, use subscribe
     if (!this.colaborador || !this.activoSeleccionado) {
       alert('Debe seleccionar un colaborador y un activo.');
       return;
     }
 
-    console.log('--- Asignación Creada (Mock) ---');
-    console.log('Colaborador:', this.colaborador.name);
-    console.log('Activo:', this.activoSeleccionado.serie);
-    console.log('Fecha:', this.fechaAsignacion);
+    if (this.isSaving) return;
+    this.isSaving = true;
 
-    // Aquí iría la llamada al servicio para "guardar" la asignación
-    // this.asignacionService.crearAsignacion(...)
+    const request: AsignacionRequest = {
+      dispositivoId: parseInt(this.activoSeleccionado.id, 10), // Converting string ID to number
+      empleadoId: parseInt(this.colaborador.id, 10),
+      fechaAsignacion: this.fechaAsignacion,
+      observacionesAsignacion: 'Asignación creada desde frontend', // Input field could be added later
+      usuarioAsignaId: 1 // HC for now as per plan
+    };
 
-    alert('Asignación guardada exitosamente (simulación)');
+    console.log('--- Enviando Asignación ---', request);
 
-    // Limpiar vista
-    this.nuevaAsignacion();
+    this.asignacionService.crearAsignacion(request).subscribe({
+      next: (response) => {
+        console.log('Respuesta Exitosa:', response);
+        alert('Asignación guardada exitosamente');
+        this.nuevaAsignacion();
+      },
+      error: (err) => {
+        console.error('Error al guardar asignación:', err);
+        alert('Error al guardar la asignación. Verifique los datos e intente nuevamente.');
+        this.isSaving = false;
+      }
+    });
   }
 }

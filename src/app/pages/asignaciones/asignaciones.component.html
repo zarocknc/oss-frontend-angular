@@ -30,193 +30,264 @@
 
   <!-- Tabs -->
   <div role="tablist" class="tabs tabs-lifted tabs-lg mb-0 z-10">
-    <a role="tab"
-      class="tab tab-active font-bold text-primary bg-base-100 border-b-0 shadow-[0_-5px_10px_-5px_rgba(0,0,0,0.05)]">Asignación
-      por Ingreso Nuevo</a>
-    <a role="tab" class="tab text-base-content/70 hover:text-base-content transition-colors">Historial de
-      asignaciones</a>
+    <a role="tab" class="tab" 
+       [class.tab-active]="activeTab === 'nuevo'" 
+       [class.font-bold]="activeTab === 'nuevo'"
+       [class.text-primary]="activeTab === 'nuevo'"
+       [class.bg-base-100]="activeTab === 'nuevo'"
+       (click)="setActiveTab('nuevo')">
+       Asignación por Ingreso Nuevo
+    </a>
+    <a role="tab" class="tab" 
+       [class.tab-active]="activeTab === 'historial'"
+       [class.font-bold]="activeTab === 'historial'"
+       [class.text-primary]="activeTab === 'historial'"
+       [class.bg-base-100]="activeTab === 'historial'"
+       (click)="setActiveTab('historial')">
+       Historial de asignaciones
+    </a>
     <a role="tab" class="tab flex-1 cursor-default border-b-base-300"></a>
   </div>
 
   <!-- Main Content Area -->
-  <div
-    class="bg-base-100 p-8 shadow-xl rounded-b-2xl rounded-tr-2xl border border-base-300 flex-1 flex flex-col relative z-0">
+  <div class="bg-base-100 p-8 shadow-xl rounded-b-2xl rounded-tr-2xl border border-base-300 flex-1 flex flex-col relative z-0">
 
-    <div class="flex flex-col lg:flex-row gap-8">
-
-      <!-- Left Column: Search & Date -->
-      <div class="flex-1 space-y-6">
-
-        <!-- Search Form -->
-        <div class="flex flex-wrap gap-4 items-end bg-base-200/50 p-4 rounded-xl border border-base-200">
-          <div class="form-control w-full sm:w-auto flex flex-col">
-            <label class="label py-1 justify-start">
-              <span class="label-text font-semibold text-base-content/80">Dni colaborador</span>
-            </label>
-            <input type="text"
-              class="input input-bordered bg-base-100 focus:ring-2 focus:ring-primary/20 w-full sm:w-40 transition-all"
-              placeholder="12345678" [(ngModel)]="searchDni" (keyup.enter)="buscarColaborador()" />
-          </div>
-
-          <div class="form-control w-full sm:w-auto flex-1 flex flex-col">
-            <label class="label py-1 justify-start">
-              <span class="label-text font-semibold text-base-content/80">Correo Colaborador</span>
-            </label>
-            <input type="email"
-              class="input input-bordered bg-base-100 focus:ring-2 focus:ring-primary/20 w-full transition-all"
-              placeholder="correo@empresa.com" [(ngModel)]="searchCorreo" (keyup.enter)="buscarColaborador()" />
-          </div>
-
-          <button class="btn btn-primary text-white px-8 shadow-sm" (click)="buscarColaborador()"
-            [disabled]="isLoadingSearch">
-            <span *ngIf="!isLoadingSearch">Buscar</span>
-            <span *ngIf="isLoadingSearch" class="loading loading-spinner loading-xs"></span>
-          </button>
-        </div>
-
-        <!-- Date Picker with Cally -->
-        <div class="form-control w-full sm:w-auto max-w-xs">
-          <label class="label py-1">
-            <span class="label-text font-semibold text-base-content/80">Fecha de asignación</span>
-          </label>
-
-          <button popovertarget="cally-popover1"
-            class="input input-bordered bg-base-100 w-full flex items-center justify-between text-left font-normal focus:ring-2 focus:ring-primary/20 transition-all"
-            id="cally1" style="anchor-name:--cally1">
-            {{ fechaAsignacion || 'Seleccionar fecha' }}
-            <lucide-icon name="calendar" size="18" class="opacity-50"></lucide-icon>
-          </button>
-
-          <div popover id="cally-popover1"
-            class="dropdown bg-base-100 rounded-box shadow-lg border border-base-200 p-4 z-50"
-            style="position-anchor:--cally1; margin-top: 0.5rem;">
-            <calendar-date class="cally" [value]="fechaAsignacion"
-              (change)="fechaAsignacion = $any($event).target.value">
-              <svg aria-label="Previous" class="fill-current size-4 cursor-pointer hover:text-primary transition-colors"
-                slot="previous" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M15.75 19.5 8.25 12l7.5-7.5"></path>
-              </svg>
-              <svg aria-label="Next" class="fill-current size-4 cursor-pointer hover:text-primary transition-colors"
-                slot="next" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="m8.25 4.5 7.5 7.5-7.5 7.5"></path>
-              </svg>
-              <calendar-month></calendar-month>
-            </calendar-date>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Right Column: Employee Card -->
-      <div class="w-full lg:w-96">
-        <div class="card bg-base-100 border border-base-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <div class="card-body p-6">
-            <div class="flex items-center gap-3 mb-4 border-b border-base-200 pb-4">
-              <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <lucide-icon name="user" size="20"></lucide-icon>
+    <!-- TAB: NUEVA ASIGNACION -->
+    <div *ngIf="activeTab === 'nuevo'" class="flex flex-col h-full">
+        <div class="flex flex-col lg:flex-row gap-8">
+    
+          <!-- Left Column: Search & Date -->
+          <div class="flex-1 space-y-6">
+    
+            <!-- Search Form -->
+            <div class="flex flex-wrap gap-4 items-end bg-base-200/50 p-4 rounded-xl border border-base-200">
+              <div class="form-control w-full sm:w-auto flex flex-col">
+                <label class="label py-1 justify-start">
+                  <span class="label-text font-semibold text-base-content/80">Dni colaborador</span>
+                </label>
+                <input type="text"
+                  class="input input-bordered bg-base-100 focus:ring-2 focus:ring-primary/20 w-full sm:w-40 transition-all"
+                  placeholder="12345678" [(ngModel)]="searchDni" (keyup.enter)="buscarColaborador()" />
               </div>
-              <h2 class="card-title text-lg">Datos del Empleado</h2>
+    
+              <div class="form-control w-full sm:w-auto flex-1 flex flex-col">
+                <label class="label py-1 justify-start">
+                  <span class="label-text font-semibold text-base-content/80">Correo Colaborador</span>
+                </label>
+                <input type="email"
+                  class="input input-bordered bg-base-100 focus:ring-2 focus:ring-primary/20 w-full transition-all"
+                  placeholder="correo@empresa.com" [(ngModel)]="searchCorreo" (keyup.enter)="buscarColaborador()" />
+              </div>
+    
+              <button class="btn btn-primary text-white px-8 shadow-sm" (click)="buscarColaborador()"
+                [disabled]="isLoadingSearch">
+                <span *ngIf="!isLoadingSearch">Buscar</span>
+                <span *ngIf="isLoadingSearch" class="loading loading-spinner loading-xs"></span>
+              </button>
             </div>
-
-            <div class="space-y-3 text-sm" *ngIf="colaborador; else noColaborador">
-              <div class="grid grid-cols-[80px_1fr] gap-2 items-center">
-                <span class="font-semibold text-base-content/60">Nombre :</span>
-                <span class="font-medium text-base-content">{{ colaborador.name }}</span>
-
-                <span class="font-semibold text-base-content/60">Puesto :</span>
-                <span class="badge badge-ghost badge-sm">{{ colaborador.position }}</span>
-
-                <span class="font-semibold text-base-content/60">Perfil :</span>
-                <span class="font-medium text-base-content">{{ colaborador.profile }}</span>
-
-                <span class="font-semibold text-base-content/60">Area :</span>
-                <span class="font-medium text-base-content">{{ colaborador.area }}</span>
-
-                <span class="font-semibold text-base-content/60">Sede :</span>
-                <span class="font-medium text-base-content">{{ colaborador.location }}</span>
-              </div>
-
-              <div class="card-actions justify-end mt-6 pt-4 border-t border-base-200">
-                <button class="btn btn-success text-white btn-sm w-full shadow-sm hover:shadow-md transition-all"
-                  (click)="asignarYGuardar()" [disabled]="!activoSeleccionado">
-                  <lucide-icon name="save" size="16"></lucide-icon>
-                  Asignar y Guardar
-                </button>
+    
+            <!-- Date Picker with Cally -->
+            <div class="form-control w-full sm:w-auto max-w-xs">
+              <label class="label py-1">
+                <span class="label-text font-semibold text-base-content/80">Fecha de asignación</span>
+              </label>
+    
+              <button popovertarget="cally-popover1"
+                class="input input-bordered bg-base-100 w-full flex items-center justify-between text-left font-normal focus:ring-2 focus:ring-primary/20 transition-all"
+                id="cally1" style="anchor-name:--cally1">
+                {{ fechaAsignacion || 'Seleccionar fecha' }}
+                <lucide-icon name="calendar" size="18" class="opacity-50"></lucide-icon>
+              </button>
+    
+              <div popover id="cally-popover1"
+                class="dropdown bg-base-100 rounded-box shadow-lg border border-base-200 p-4 z-50"
+                style="position-anchor:--cally1; margin-top: 0.5rem;">
+                <calendar-date class="cally" [value]="fechaAsignacion"
+                  (change)="fechaAsignacion = $any($event).target.value">
+                  <svg aria-label="Previous" class="fill-current size-4 cursor-pointer hover:text-primary transition-colors"
+                    slot="previous" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M15.75 19.5 8.25 12l7.5-7.5"></path>
+                  </svg>
+                  <svg aria-label="Next" class="fill-current size-4 cursor-pointer hover:text-primary transition-colors"
+                    slot="next" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="m8.25 4.5 7.5 7.5-7.5 7.5"></path>
+                  </svg>
+                  <calendar-month></calendar-month>
+                </calendar-date>
               </div>
             </div>
-
-            <ng-template #noColaborador>
-              <div class="py-10 text-center flex flex-col items-center text-base-content/40">
-                <lucide-icon name="user-search" size="40" class="mb-3 opacity-50"></lucide-icon>
-                <p class="text-sm italic">Realice una búsqueda para ver los datos</p>
+    
+          </div>
+    
+          <!-- Right Column: Employee Card -->
+          <div class="w-full lg:w-96">
+            <div class="card bg-base-100 border border-base-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div class="card-body p-6">
+                <div class="flex items-center gap-3 mb-4 border-b border-base-200 pb-4">
+                  <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <lucide-icon name="user" size="20"></lucide-icon>
+                  </div>
+                  <h2 class="card-title text-lg">Datos del Empleado</h2>
+                </div>
+    
+                <div class="space-y-3 text-sm" *ngIf="colaborador; else noColaborador">
+                  <div class="grid grid-cols-[80px_1fr] gap-2 items-center">
+                    <span class="font-semibold text-base-content/60">Nombre :</span>
+                    <span class="font-medium text-base-content">{{ colaborador.name }}</span>
+    
+                    <span class="font-semibold text-base-content/60">Puesto :</span>
+                    <span class="badge badge-ghost badge-sm">{{ colaborador.position }}</span>
+    
+                    <span class="font-semibold text-base-content/60">Perfil :</span>
+                    <span class="font-medium text-base-content">{{ colaborador.profile }}</span>
+    
+                    <span class="font-semibold text-base-content/60">Area :</span>
+                    <span class="font-medium text-base-content">{{ colaborador.area }}</span>
+    
+                    <span class="font-semibold text-base-content/60">Sede :</span>
+                    <span class="font-medium text-base-content">{{ colaborador.location }}</span>
+                  </div>
+    
+                  <div class="card-actions justify-end mt-6 pt-4 border-t border-base-200">
+                    <button class="btn btn-success text-white btn-sm w-full shadow-sm hover:shadow-md transition-all"
+                      (click)="asignarYGuardar()" [disabled]="!activoSeleccionado || isSaving">
+                      <span *ngIf="!isSaving" class="flex items-center gap-2"><lucide-icon name="save" size="16"></lucide-icon> Asignar y Guardar</span>
+                      <span *ngIf="isSaving" class="loading loading-spinner loading-xs"></span>
+                    </button>
+                  </div>
+                </div>
+    
+                <ng-template #noColaborador>
+                  <div class="py-10 text-center flex flex-col items-center text-base-content/40">
+                    <lucide-icon name="user-search" size="40" class="mb-3 opacity-50"></lucide-icon>
+                    <p class="text-sm italic">Realice una búsqueda para ver los datos</p>
+                  </div>
+                </ng-template>
+    
               </div>
-            </ng-template>
-
+            </div>
+          </div>
+    
+        </div>
+    
+        <div class="divider my-8 text-base-content/30">Detalle de Activos</div>
+    
+        <!-- Table Section -->
+        <div class="bg-base-100 rounded-xl border border-base-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+          <div class="overflow-x-auto flex-1">
+            <table class="table table-zebra w-full">
+              <thead
+                class="bg-base-200/70 text-base-content font-bold uppercase text-xs tracking-wider sticky top-0 z-10 backdrop-blur-sm">
+                <tr>
+                  <th class="w-12"></th>
+                  <th>Equipo</th>
+                  <th>Marca</th>
+                  <th>Modelo</th>
+                  <th>Serie</th>
+                  <th>Inv.</th>
+                  <th>Estado</th>
+                  <th>Gama</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let activo of activosDisponibles"
+                  class="hover:bg-primary/5 cursor-pointer transition-colors group"
+                  [class.bg-primary/10]="activo === activoSeleccionado" (click)="seleccionarActivo(activo)">
+                  <td>
+                    <input type="radio" name="activoSeleccionado"
+                      class="radio radio-primary radio-sm group-hover:scale-110 transition-transform"
+                      [checked]="activo === activoSeleccionado"
+                      (click)="$event.stopPropagation(); seleccionarActivo(activo)" />
+                  </td>
+                  <td class="font-semibold text-primary">{{ activo.tipoEquipo }}</td>
+                  <td>{{ activo.marca }}</td>
+                  <td>{{ activo.modelo }}</td>
+                  <td class="font-mono text-xs">{{ activo.serie }}</td>
+                  <td class="font-mono text-xs">{{ activo.codigoInventario }}</td>
+                  <td>
+                    <span class="badge badge-sm font-medium shadow-sm" [ngClass]="{
+                        'badge-success text-white': activo.estado === 'Disponible',
+                        'badge-warning': activo.estado === 'En Revisión',
+                        'badge-error text-white': activo.estado === 'Malo'
+                      }">
+                      {{ activo.estado }}
+                    </span>
+                  </td>
+                  <td><span class="badge badge-ghost badge-sm badge-outline">{{ activo.gama }}</span></td>
+                </tr>
+    
+                <!-- Empty State -->
+                <tr *ngIf="activosDisponibles.length === 0">
+                  <td colspan="8" class="h-64">
+                    <div class="flex flex-col items-center justify-center text-base-content/30">
+                      <div class="bg-base-200 p-4 rounded-full mb-3">
+                        <lucide-icon name="inbox" size="32"></lucide-icon>
+                      </div>
+                      <span class="font-medium">No hay activos disponibles para mostrar</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
-
     </div>
 
-    <div class="divider my-8 text-base-content/30">Detalle de Activos</div>
+    <!-- TAB: HISTORIAL -->
+    <div *ngIf="activeTab === 'historial'" class="flex flex-col h-full">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold">Historial de Asignaciones</h2>
+        <button class="btn btn-ghost btn-sm" (click)="loadHistorial()">
+            <lucide-icon name="refresh-cw" size="18"></lucide-icon> Actualizar
+        </button>
+      </div>
 
-    <!-- Table Section -->
-    <div class="bg-base-100 rounded-xl border border-base-200 shadow-sm overflow-hidden flex-1 flex flex-col">
-      <div class="overflow-x-auto flex-1">
-        <table class="table table-zebra w-full">
-          <thead
-            class="bg-base-200/70 text-base-content font-bold uppercase text-xs tracking-wider sticky top-0 z-10 backdrop-blur-sm">
-            <tr>
-              <th class="w-12"></th>
-              <th>Equipo</th>
-              <th>Marca</th>
-              <th>Modelo</th>
-              <th>Serie</th>
-              <th>Inv.</th>
-              <th>Estado</th>
-              <th>Gama</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let activo of activosDisponibles"
-              class="hover:bg-primary/5 cursor-pointer transition-colors group"
-              [class.bg-primary/10]="activo === activoSeleccionado" (click)="seleccionarActivo(activo)">
-              <td>
-                <input type="radio" name="activoSeleccionado"
-                  class="radio radio-primary radio-sm group-hover:scale-110 transition-transform"
-                  [checked]="activo === activoSeleccionado"
-                  (click)="$event.stopPropagation(); seleccionarActivo(activo)" />
-              </td>
-              <td class="font-semibold text-primary">{{ activo.tipoEquipo }}</td>
-              <td>{{ activo.marca }}</td>
-              <td>{{ activo.modelo }}</td>
-              <td class="font-mono text-xs">{{ activo.serie }}</td>
-              <td class="font-mono text-xs">{{ activo.codigoInventario }}</td>
-              <td>
-                <span class="badge badge-sm font-medium shadow-sm" [ngClass]="{
-                    'badge-success text-white': activo.estado === 'Disponible',
-                    'badge-warning': activo.estado === 'En Revisión',
-                    'badge-error text-white': activo.estado === 'Malo'
+      <div class="bg-base-100 rounded-xl border border-base-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+        <div class="overflow-x-auto flex-1">
+          <table class="table table-zebra w-full">
+            <thead class="bg-base-200/70 text-base-content font-bold uppercase text-xs tracking-wider sticky top-0 z-10">
+              <tr>
+                <th>ID</th>
+                <th>Empleado</th>
+                <th>Equipo</th>
+                <th>Serie</th>
+                <th>Fecha Asignación</th>
+                <th>Estado</th>
+                <th>Observaciones</th>
+                <!-- <th>Acciones</th> -->
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of historialAsignaciones">
+                <td class="font-mono text-xs">{{ item.id }}</td>
+                <td class="font-medium">{{ item.empleado?.nombreCompleto || 'N/A' }}</td>
+                <td>{{ item.dispositivo?.tipoDispositivo?.nombre }} {{ item.dispositivo?.marca?.nombre }}</td>
+                <td class="font-mono text-xs">{{ item.dispositivo?.numeroSerie }}</td>
+                <td>{{ item.fechaAsignacion }}</td>
+                <td>
+                  <span class="badge badge-sm font-medium" [ngClass]="{
+                    'badge-success text-white': item.estadoAsignacion?.codigo === 'ACTIVA',
+                    'badge-ghost': item.estadoAsignacion?.codigo !== 'ACTIVA'
                   }">
-                  {{ activo.estado }}
-                </span>
-              </td>
-              <td><span class="badge badge-ghost badge-sm badge-outline">{{ activo.gama }}</span></td>
-            </tr>
-
-            <!-- Empty State -->
-            <tr *ngIf="activosDisponibles.length === 0">
-              <td colspan="8" class="h-64">
-                <div class="flex flex-col items-center justify-center text-base-content/30">
-                  <div class="bg-base-200 p-4 rounded-full mb-3">
-                    <lucide-icon name="inbox" size="32"></lucide-icon>
-                  </div>
-                  <span class="font-medium">No hay activos disponibles para mostrar</span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                    {{ item.estadoAsignacion?.nombre }}
+                  </span>
+                </td>
+                <td class="text-xs max-w-xs truncate">{{ item.observacionesAsignacion || '-' }}</td>
+                <!-- <td>
+                  <button class="btn btn-xs btn-ghost text-error" *ngIf="item.estadoAsignacion?.codigo === 'ACTIVA'">Devolver</button>
+                </td> -->
+              </tr>
+              <tr *ngIf="historialAsignaciones.length === 0 && !isLoadingHistorial">
+                 <td colspan="7" class="text-center py-10 text-base-content/40">No hay asignaciones registradas</td>
+              </tr>
+              <tr *ngIf="isLoadingHistorial">
+                <td colspan="7" class="text-center py-10">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
