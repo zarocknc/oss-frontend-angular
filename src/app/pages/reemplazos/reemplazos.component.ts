@@ -220,16 +220,19 @@ export class ReplacementComponent {
 
   searchEmployee() {
     this.searchPerformed = true;
-    const emp = this.replacementService.searchEmployee(this.employeeQuery);
-    if (emp) {
-      this.selectedEmployee.set(emp);
-      this.assignedAssets.set(this.replacementService.getAssignedAssets(emp.id));
-      // Reset replacement state if employee changes?
-      this.cancelReplacement();
-    } else {
-      this.selectedEmployee.set(null);
-      this.assignedAssets.set([]);
-    }
+    this.replacementService.searchEmployee(this.employeeQuery).subscribe(emp => {
+      if (emp) {
+        this.selectedEmployee.set(emp);
+        this.replacementService.getAssignedAssets(emp.id).subscribe(assets => {
+             this.assignedAssets.set(assets);
+        });
+        // Reset replacement state if employee changes?
+        this.cancelReplacement();
+      } else {
+        this.selectedEmployee.set(null);
+        this.assignedAssets.set([]);
+      }
+    });
   }
 
   initiateReplacement(asset: Asset) {

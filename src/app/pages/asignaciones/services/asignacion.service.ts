@@ -16,6 +16,7 @@ export interface AsignacionResponse {
   dispositivo: {
     id: number;
     numeroSerie: string;
+    codigoActivo: string;
     tipoDispositivo: { nombre: string };
     marca: { nombre: string };
     modelo: string;
@@ -42,5 +43,9 @@ export class AsignacionService {
 
   getHistorial(): Observable<AsignacionResponse[]> {
     return this.http.get<AsignacionResponse[]>(`${this.apiUrl}/asignaciones`);
+  }
+
+  getAsignacionesActivasPorEmpleado(empleadoId: string): Observable<AsignacionResponse[]> {
+    return this.http.get<AsignacionResponse[]>(`${this.apiUrl}/asignaciones/empleado/${empleadoId}/activas`);
   }
 }

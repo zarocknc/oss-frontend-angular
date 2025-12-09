@@ -1,7 +1,14 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { switchMap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
+import { EmployeeService } from '../../empleados/services/employee.service';
+import { AsignacionService } from '../../asignaciones/services/asignacion.service';
+import { ActivoService } from '../../asignaciones/services/activo.service';
+
+// Re-export or map types to match Component expectations if needed, 
+// or update Component to use shared types. For now, adapting to match Component.
 
 export interface Employee {
   id: string;
@@ -13,15 +20,15 @@ export interface Employee {
 export interface Asset {
   id: string;
   assignmentId?: string;
-  type: string; // Laptop, Monitor
+  type: string;
   brand: string;
   model: string;
   series: string;
-  state: 'Nuevo' | 'Usado' | 'Malo';
-  status: 'assigned' | 'available' | 'maintenance';
-  location?: string; // Almacen
-  inventoryCode?: string; // Inv.
-  gama?: string; // Gama A, Gama B
+  state: string;
+  status: string;
+  location?: string;
+  inventoryCode?: string;
+  gama?: string;
 }
 
 export interface ReplacementRecord {
@@ -31,8 +38,11 @@ export interface ReplacementRecord {
   employee: Employee;
   originalAsset: Asset;
   newAsset: Asset;
-  reportUrl?: string; // Valid link to file
-  observations?: string;
+  originalAssetId: string; // for compatibility if needed
+  newAssetId: string;      // for compatibility if needed
+  reason: string;
+  status: 'Pending' | 'Completed' | 'Rejected';
+  reportUrl?: string; // URL to the technical report
 }
 
 @Injectable({
@@ -41,80 +51,139 @@ export interface ReplacementRecord {
 export class ReplacementService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
+  private employeeService = inject(EmployeeService);
+  private asignacionService = inject(AsignacionService);
+  private activoService = inject(ActivoService);
 
-  // Mock Data (Kept for UI population if needed, but actions are now API driven)
-  private _employees = signal<Employee[]>([
-    { id: '1', name: 'Ana Martinez', email: 'ana.martinez@emp.com', dni: '45678901' },
-    { id: '2', name: 'Carlos Lopez', email: 'carlos.lopez@emp.com', dni: '12345678' }
-  ]);
-
-  private _assets = signal<Asset[]>([
-    // Assigned to Ana
-    { id: 'a1', assignmentId: '101', type: 'Laptop', brand: 'HP', model: 'Probook 440 g8', series: '5CD2782JK2', state: 'Usado', status: 'assigned' },
-    { id: 'a2', assignmentId: '102', type: 'Monitor', brand: 'HP', model: 'Probook 440 g8', series: '5CD2782J98', state: 'Usado', status: 'assigned' },
-    // Available
-    { id: 's1', type: 'Laptop', brand: 'HP', model: 'Probook 640 G8', series: '5CD980933', state: 'Usado', status: 'available', location: 'San Isidro', inventoryCode: 'EURP083', gama: 'Gama B' },
-    { id: 's2', type: 'Laptop', brand: 'HP', model: 'Probook 640 G8', series: '5CD980934', state: 'Nuevo', status: 'available', location: 'Miraflores', inventoryCode: 'EURP084', gama: 'Gama A' },
-    { id: 's3', type: 'Laptop', brand: 'Dell', model: 'Latitude 5420', series: 'DL980935', state: 'Nuevo', status: 'available', location: 'San Isidro', inventoryCode: 'EURP085', gama: 'Gama A' },
-    { id: 's4', type: 'Monitor', brand: 'Dell', model: 'P2419H', series: 'DL980936', state: 'Usado', status: 'available', location: 'San Isidro', inventoryCode: 'EURP086', gama: 'Gama B' },
-  ]);
-
-  // Use a map to track assignments: EmployeeId -> AssetId[]
-  // For mock, just hardcode
-  private _assignments = signal<{ [employeeId: string]: string[] }>({
-    '1': ['a1', 'a2']
-  });
-
-  private _replacements = signal<ReplacementRecord[]>([
-    {
-      id: 'r1', date: '2023-11-25', ticket: 'req09283',
-      employee: { id: '1', name: 'Ana Martinez', email: 'ana.martinez@emp.com', dni: '45678901' },
-      originalAsset: { id: 'old_1', type: 'Laptop', brand: 'HP', model: 'Probook 440 g8', series: '5CD8786YT56', state: 'Usado', status: 'assigned' }, // Historical data
-      newAsset: { id: 'new_1', type: 'Laptop', brand: 'HP', model: 'Probook 440 g9', series: '5CD8786YT78', state: 'Nuevo', status: 'assigned' }, // Historical data
-      reportUrl: '#'
-    }
-  ]);
-
-  // Read-only signals or computed logic can be exposed
-  replacements = this._replacements.asReadonly();
-
-  searchEmployee(query: string): Employee | undefined {
-    const q = query.toLowerCase();
-    return this._employees().find(e => e.dni.includes(q) || e.email.toLowerCase().includes(q) || e.name.toLowerCase().includes(q));
+  // Search Employee using EmployeeService
+  searchEmployee(query: string): Observable<Employee | null> {
+    // Adapter for EmployeeService returning any[] or specific DTO
+    // Passing empty string for locationFilter as it's required by the service signature but we don't filter by location here
+    return this.employeeService.searchEmployees(query, '').pipe(
+      map((employees: any[]) => {
+        if (!employees || employees.length === 0) return null;
+        // Map backend Employee to local interface
+        const emp = employees[0]; 
+        return {
+          id: emp.id.toString(),
+          name: emp.nombreCompleto || `${emp.nombre} ${emp.apellidoPaterno}`,
+          email: emp.email,
+          dni: emp.codigoEmpleado
+        };
+      })
+    );
   }
 
-  getAssignedAssets(employeeId: string): Asset[] {
-    const assetIds = this._assignments()[employeeId] || [];
-    return this._assets().filter(a => assetIds.includes(a.id));
+  // Get Assigned Assets using AsignacionService
+  getAssignedAssets(employeeId: string): Observable<Asset[]> {
+    return this.asignacionService.getAsignacionesActivasPorEmpleado(employeeId).pipe( 
+        map(asignaciones => {
+             return asignaciones
+                .map(a => ({
+                    id: a.dispositivo.id.toString(),
+                    assignmentId: a.id.toString(),
+                    type: a.dispositivo.tipoDispositivo.nombre,
+                    brand: a.dispositivo.marca.nombre,
+                    model: a.dispositivo.modelo,
+                    series: a.dispositivo.numeroSerie,
+                    state: 'Usado',
+                    status: 'assigned',
+                    inventoryCode: a.dispositivo.codigoActivo
+                }));
+        })
+    );
   }
 
-  getAvailableAssets(filters?: { location?: string, series?: string, state?: string, model?: string }): Asset[] {
-    return this._assets().filter(a => {
-      if (a.status !== 'available') return false;
-      if (filters?.location && a.location !== filters.location) return false;
-      if (filters?.series && !a.series.toLowerCase().includes(filters.series.toLowerCase())) return false;
-      if (filters?.state && a.state !== filters.state) return false;
-      if (filters?.model && !a.model.toLowerCase().includes(filters.model.toLowerCase())) return false;
-      return true;
-    });
+  // Updated to accept filters to match usage in AssetSelectionDialogComponent
+  getAvailableAssets(filters?: any): Observable<Asset[]> {
+    // Passing empty string for 'perfil' as required by ActivoService
+    return this.activoService.getActivosDisponibles('').pipe(
+        map(activos => {
+            let mappedAssets = activos.map(a => ({
+                id: a.id.toString(),
+                type: a.tipoEquipo,
+                brand: a.marca,
+                model: a.modelo,
+                series: a.serie,
+                state: a.estado || 'Bueno',
+                status: 'available',
+                inventoryCode: a.codigoInventario,
+                gama: a.gama,
+                location: 'Principal' // Default or missing
+            }));
+
+            // Client-side filtering if filters are provided
+            if (filters) {
+                if (filters.type) {
+                  mappedAssets = mappedAssets.filter(a => a.type === filters.type);
+                }
+                if (filters.search) {
+                  const search = filters.search.toLowerCase();
+                  mappedAssets = mappedAssets.filter(a => 
+                    a.model.toLowerCase().includes(search) || 
+                    a.series.toLowerCase().includes(search)
+                  );
+                }
+            }
+            return mappedAssets;
+        })
+    );
   }
 
-  // "One-Click" Replacement for the UI
-  confirmReplacement(data: any) {
-    // 1. Prepare Payload for Step 1
+  confirmReplacement(data: any): Observable<any> {
+    // 1. Create Replacement Request
     const requestPayload = {
-      asignacionOriginalId: +data.originalAsset.assignmentId, // Use assignmentId
+      asignacionOriginalId: +data.originalAsset.assignmentId,
       dispositivoReemplazoId: +data.newAsset.id,
-      motivoReemplazoId: 1, // 1 = Falla HW (Hardcoded or select from UI)
-      usuarioRegistraId: 1, // Hardcoded admin
-      descripcionMotivo: data.observations || 'Reemplazo express'
+      motivoReemplazoId: 1, // 1 = Falla HW (Hardcoded)
+      usuarioRegistraId: 1, // Hardcoded
+      descripcionMotivo: data.observations || 'Reemplazo solicitado desde web'
     };
 
     return this.http.post<any>(`${this.apiUrl}/reemplazos`, requestPayload).pipe(
-      // 2. Automatically trigger Step 2 using the ID from Step 1
+      // 2. Execute immediately
       switchMap(createdRequest => {
         return this.http.post(`${this.apiUrl}/reemplazos/${createdRequest.id}/ejecutar`, {});
       })
+    );
+  }
+
+  getHistory(): Observable<ReplacementRecord[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/reemplazos`).pipe(
+      map(replacements => replacements.map(r => ({
+        id: r.id.toString(),
+        date: r.fechaRegistro,
+        ticket: 'N/A', // Backend might not have ticket, placeholder
+        employee: {
+          id: r.asignacionOriginal?.empleado?.id.toString(),
+          name: `${r.asignacionOriginal?.empleado?.nombre} ${r.asignacionOriginal?.empleado?.apellidoPaterno}`,
+          email: r.asignacionOriginal?.empleado?.email,
+          dni: r.asignacionOriginal?.empleado?.codigoEmpleado
+        },
+        originalAsset: {
+          id: r.asignacionOriginal?.dispositivo?.id.toString(),
+          type: r.asignacionOriginal?.dispositivo?.tipoDispositivo?.nombre,
+          brand: r.asignacionOriginal?.dispositivo?.marca?.nombre,
+          model: r.asignacionOriginal?.dispositivo?.modelo,
+          series: r.asignacionOriginal?.dispositivo?.numeroSerie,
+          state: 'Reemplazado',
+          status: 'replaced'
+        },
+        newAsset: {
+          id: r.dispositivoReemplazo?.id.toString(),
+          type: r.dispositivoReemplazo?.tipoDispositivo?.nombre,
+          brand: r.dispositivoReemplazo?.marca?.nombre,
+          model: r.dispositivoReemplazo?.modelo,
+          series: r.dispositivoReemplazo?.numeroSerie,
+          state: 'Asignado',
+          status: 'assigned'
+        },
+        originalAssetId: r.asignacionOriginal?.dispositivo?.id.toString(),
+        newAssetId: r.dispositivoReemplazo?.id.toString(),
+        reason: r.descripcionMotivo,
+        status: r.estadoReemplazo === 'EJECUTADO' ? 'Completed' : 'Pending',
+        reportUrl: '#'
+      })))
     );
   }
 }

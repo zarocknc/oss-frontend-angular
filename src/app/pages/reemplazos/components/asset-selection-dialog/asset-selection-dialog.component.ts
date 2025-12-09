@@ -128,16 +128,15 @@ export class AssetSelectionDialogComponent {
 
   setInputAsset(asset: Asset) {
     this.activeAsset.set(asset);
-    // Determine filters based on asset type if needed, but for now show all compatible types?
-    // User requirement just says "allows filtering".
-    // I'll filter by same type automatically to be smart? The prompt says "allows filtering", doesn't imply auto-filter.
-    // But logically you replace a Laptop with a Laptop.
-    // I'll implement "search" to be manual mainly, but maybe pre-fill type if I had it in filters.
+    // Pre-fill type matching?
+    // this.filters.model = asset.model; // Optional smart filter
     this.search(); 
   }
 
   search() {
-    this.availableAssets.set(this.replacementService.getAvailableAssets(this.filters));
+    this.replacementService.getAvailableAssets(this.filters).subscribe(assets => {
+        this.availableAssets.set(assets);
+    });
   }
 
   selectAsset(asset: Asset) {

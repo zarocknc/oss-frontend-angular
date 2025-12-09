@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReplacementService, ReplacementRecord } from '../../services/replacement.service';
 import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-replacement-history',
@@ -29,7 +30,7 @@ import { RouterLink } from '@angular/router';
           <input type="text" placeholder="Buscar por ticket..." class="input input-bordered bg-white w-full" />
         </div>
         <div class="form-control">
-           <label class="label text-xs font-bold text-gray-500 uppercase">Colaborador</label>
+          <label class="label text-xs font-bold text-gray-500 uppercase">Colaborador</label>
           <input type="text" placeholder="Nombre del colaborador..." class="input input-bordered bg-white w-full" />
         </div>
       </div>
@@ -75,7 +76,7 @@ import { RouterLink } from '@angular/router';
                 </td>
               </tr>
             }
-            @if (history().length === 0) {
+            @if (!history() || history().length === 0) {
               <tr>
                 <td colspan="6" class="text-center py-8 text-gray-500">
                   No se encontraron registros.
@@ -86,7 +87,7 @@ import { RouterLink } from '@angular/router';
         </table>
       </div>
        <div class="p-2 border-t border-gray-100 bg-gray-50 text-xs text-center text-gray-400">
-        Mostrando {{ history().length }} registros
+         Mostrando {{ history() ? history().length : 0 }} registros
       </div>
     </div>
   `
@@ -94,5 +95,6 @@ import { RouterLink } from '@angular/router';
 export class ReplacementHistoryComponent {
   private replacementService = inject(ReplacementService);
   
-  history = this.replacementService.replacements;
+  // Initialize with empty array if loading, or handle loading state properly
+  history = toSignal(this.replacementService.getHistory(), { initialValue: [] });
 }
