@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export type AssetStatus = 'Disponible' | 'Asignado' | 'En mantenimiento' | 'Baja';
@@ -110,10 +111,40 @@ export class InventoryService {
     });
   }
 
-  addAssets(newAssets: InventoryAsset[]) {
-    // This would need a proper API endpoint for bulk creation or loop
-    // For now, just a placeholder or single create if needed
-    // this._assets.update(current => [...current, ...newAssets]);
+  addAssets(newAssets: any[]): Observable<any> {
+    const requests = newAssets.map(asset => {
+        const payload: DispositivoRequest = {
+            codigoActivo: asset.invCode,
+            numeroSerie: asset.series,
+            tipoDispositivoId: asset.tipoDispositivoId,
+            marcaId: asset.marcaId,
+            modelo: asset.model,
+            especificaciones: `${asset.processor || ''} ${asset.ram || ''}`.trim(),
+            fechaAdquisicion: asset.fechaAdquisicion,
+            valorAdquisicion: asset.valorAdquisicion,
+            proveedorId: asset.proveedorId,
+            observaciones: asset.observation,
+            estadoDispositivoId: 1 // Disponible by default
+        };
+        console.log('Sending payload:', payload);
+        
+        return this.http.post<any>(`${this.apiUrl}/dispositivos`, payload).pipe(
+            map(res => ({ success: true, data: res })),
+            catchError(err => {
+                console.error('API Error for asset:', asset.invCode, err);
+                return of({ success: false, error: err });
+            })
+        );
+    });
+
+    return forkJoin(requests).pipe(
+        map(results => {
+            const successes = results.filter(r => r.success).length;
+            const failures = results.filter(r => !r.success).length;
+            this.loadAssets(); // Refresh list always
+            return { count: successes, errors: failures, results };
+        })
+    );
   }
 
   getNextId(): string {
@@ -141,4 +172,18 @@ export class InventoryService {
       bookValue: apiAsset.valorAdquisicion ? `S/. ${apiAsset.valorAdquisicion}` : 'S/. 0'
     };
   }
+}
+
+export interface DispositivoRequest {
+    codigoActivo: string;
+    numeroSerie: string;
+    tipoDispositivoId: number;
+    marcaId: number;
+    modelo: string;
+    especificaciones: string;
+    fechaAdquisicion: string;
+    valorAdquisicion: number;
+    proveedorId: number;
+    observaciones: string;
+    estadoDispositivoId: number;
 }

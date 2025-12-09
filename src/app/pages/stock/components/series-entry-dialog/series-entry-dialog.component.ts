@@ -1,8 +1,9 @@
-import { Component, EventEmitter, inject, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Output, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { InventoryService, InventoryAsset, AssetStatus } from '../../../inventario/services/inventory.service';
+import { CatalogService, CatalogItem } from '../../../inventario/services/catalog.service';
 
 interface SeriesEntry {
   series: string;
@@ -37,20 +38,47 @@ interface SeriesEntry {
              <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div class="form-control">
                     <label class="label text-xs font-bold text-gray-500">Marca</label>
-                    <input type="text" [(ngModel)]="brand" class="input input-sm input-bordered w-full bg-white" placeholder="Ej. Lenovo" />
+                    <select [(ngModel)]="selectedBrandId" class="select select-sm select-bordered w-full bg-white">
+                        <option [ngValue]="null" disabled>Seleccionar marca</option>
+                        @for (brand of brands(); track brand.id) {
+                            <option [ngValue]="brand.id">{{ brand.nombre }}</option>
+                        }
+                    </select>
                 </div>
                  <div class="form-control">
                     <label class="label text-xs font-bold text-gray-500">Modelo</label>
                     <input type="text" [(ngModel)]="model" class="input input-sm input-bordered w-full bg-white" placeholder="Ej. T440" />
                 </div>
                  <div class="form-control">
-                    <label class="label text-xs font-bold text-gray-500">Almacén</label>
-                    <select [(ngModel)]="location" class="select select-sm select-bordered w-full bg-white">
-                        <option value="San Borja">San Borja</option>
-                        <option value="Miraflores">Miraflores</option>
-                        <option value="Almacén Central">Almacén Central</option>
+                    <label class="label text-xs font-bold text-gray-500">Tipo de Equipo</label>
+                    <select [(ngModel)]="selectedTypeId" class="select select-sm select-bordered w-full bg-white">
+                        <option [ngValue]="null" disabled>Seleccionar tipo</option>
+                        @for (type of types(); track type.id) {
+                            <option [ngValue]="type.id">{{ type.nombre }}</option>
+                        }
                     </select>
                 </div>
+                <!-- Location / Sede -->
+                 <div class="form-control">
+                    <label class="label text-xs font-bold text-gray-500">Almacén (Sede)</label>
+                    <select [(ngModel)]="selectedSedeId" class="select select-sm select-bordered w-full bg-white">
+                        <option [ngValue]="null" disabled>Seleccionar sede</option>
+                         @for (sede of sedes(); track sede.id) {
+                            <option [ngValue]="sede.id">{{ sede.nombre }}</option>
+                        }
+                    </select>
+                </div>
+                <!-- Provider -->
+                 <div class="form-control">
+                    <label class="label text-xs font-bold text-gray-500">Proveedor</label>
+                    <select [(ngModel)]="selectedProviderId" class="select select-sm select-bordered w-full bg-white">
+                         <option [ngValue]="null" disabled>Seleccionar proveedor</option>
+                        @for (prov of providers(); track prov.id) {
+                            <option [ngValue]="prov.id">{{ prov.nombre }}</option>
+                        }
+                    </select>
+                </div>
+
                  <div class="form-control">
                     <label class="label text-xs font-bold text-gray-500">Fecha de ingreso</label>
                     <input type="date" [(ngModel)]="date" class="input input-sm input-bordered w-full bg-white" />
@@ -135,19 +163,29 @@ interface SeriesEntry {
     </div>
   `
 })
-export class SeriesEntryDialogComponent {
+export class SeriesEntryDialogComponent implements OnInit {
   private inventoryService = inject(InventoryService);
+  private catalogService = inject(CatalogService);
   
   @Output() close = new EventEmitter<void>();
-  @Output() save = new EventEmitter<InventoryAsset[]>();
+  @Output() save = new EventEmitter<any[]>(); // Emits array ready for creation
+
+  // Catalogs Signals
+  brands = signal<CatalogItem[]>([]);
+  types = signal<CatalogItem[]>([]);
+  providers = signal<CatalogItem[]>([]);
+  sedes = signal<CatalogItem[]>([]);
 
   // Form Data
-  brand = 'Lenovo';
-  model = 'T440';
-  location = 'San Borja';
+  selectedBrandId: number | null = null;
+  selectedTypeId: number | null = null;
+  selectedSedeId: number | null = null;
+  selectedProviderId: number | null = null;
+  
+  model = '';
   date = new Date().toISOString().split('T')[0];
   guideNumber = '';
-  unitValue = 1500.00;
+  unitValue = 0;
 
   // List
   list: SeriesEntry[] = [
@@ -155,6 +193,17 @@ export class SeriesEntryDialogComponent {
       { tempId: 2, series: '', invCode: '', status: 'Disponible' },
       { tempId: 3, series: '', invCode: '', status: 'Disponible' }
   ];
+
+  ngOnInit() {
+      this.loadCatalogs();
+  }
+
+  loadCatalogs() {
+      this.catalogService.getMarcas().subscribe(data => this.brands.set(data));
+      this.catalogService.getTipos().subscribe(data => this.types.set(data));
+      this.catalogService.getProveedores().subscribe(data => this.providers.set(data));
+      this.catalogService.getSedes().subscribe(data => this.sedes.set(data));
+  }
 
   onClose() {
     this.close.emit();
@@ -174,31 +223,35 @@ export class SeriesEntryDialogComponent {
 
   onSave() {
       // Validate
-      if (!this.brand || !this.model || this.list.length === 0) {
-          alert('Complete los datos del lote y agregue al menos una serie.');
+      if (!this.selectedBrandId || !this.selectedTypeId || !this.selectedProviderId || !this.model || this.list.length === 0) {
+          alert('Complete los datos obligatorios (Marca, Tipo, Proveedor, Modelo) y al menos una serie.');
           return;
       }
 
-      // Convert Items to Assets
-      const nextIdStart = parseInt(this.inventoryService.getNextId());
-      
-      const newAssets: InventoryAsset[] = this.list.map((item, index) => ({
-          id: (nextIdStart + index).toString(),
-          alm: this.location.toUpperCase(),
-          type: 'Equipo', // Generic fallback, maybe infer from model? Let's treat as 'Laptop' for demo or just 'Equipo'
-          brand: this.brand.toUpperCase(),
+      // Convert Items to Assets Payload
+      const newAssets = this.list.filter(i => i.series && i.invCode).map((item) => ({
+          // Fields required by InventoryService.addAssets (which maps to DispositivoRequest)
+          invCode: item.invCode,
+          series: item.series,
+          tipoDispositivoId: this.selectedTypeId,
+          marcaId: this.selectedBrandId,
           model: this.model,
-          series: item.series || 'SN-UNKNOWN',
-          invCode: item.invCode || `INV-${Math.floor(Math.random()*10000)}`,
-          cmdbCode: 'NUEVO',
-          status: 'Disponible',
+          processor: 'N/A', 
+          ram: 'N/A',
+          fechaAdquisicion: this.date,
+          valorAdquisicion: this.unitValue,
+          proveedorId: this.selectedProviderId,
           observation: `Ingreso Guía ${this.guideNumber}`,
-          currentLocation: this.location,
-          bookValue: `S/. ${this.unitValue}`,
-          age: 'Nuevo',
-          processor: 'N/A', // Defaults
-          ram: 'N/A'
+          // Sede/Location might be part of assignment, but for Dispositivo creation we just create the asset.
+          // If the backend Dispositivo entity binds to a Sede implies initial location, check payload.
+          // DispositivoRequest does not seem to have 'sedeId'. Location is usually tracked via 'Assignment' or 'Warehouse'.
+          // However, for now we just create the device.
       }));
+      
+      if (newAssets.length === 0) {
+          alert('Ingrese al menos una serie y código válido.');
+          return;
+      }
 
       this.save.emit(newAssets);
   }

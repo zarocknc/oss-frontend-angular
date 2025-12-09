@@ -92,10 +92,16 @@ export class StockComponent {
     this.showDialog.set(false);
   }
 
-  handleSaveAssets(assets: InventoryAsset[]) {
-      this.inventoryService.addAssets(assets);
-      this.closeDialog();
-      // Optionally show success toast or integration message
-      alert(`Se han ingresado ${assets.length} activos al inventario correctamente.`);
+  handleSaveAssets(assets: any[]) {
+      this.inventoryService.addAssets(assets).subscribe({
+        next: (res) => {
+            this.closeDialog();
+            alert(`Proceso finalizado. Se crearon ${res.count} activos correctamente.`);
+        },
+        error: (err) => {
+            alert('Ocurrió un error al guardar los activos. Revise la consola.');
+            console.error(err);
+        }
+      });
   }
 }
