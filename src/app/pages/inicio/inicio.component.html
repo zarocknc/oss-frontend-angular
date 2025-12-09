@@ -1,0 +1,145 @@
+<app-page [title]="'Dashboard Principal'"></app-page>
+
+<div class="space-y-6 mt-6">
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Card 1: Empleados -->
+    <div class="card bg-sky-600 text-white shadow-xl rounded-none">
+      <div class="card-body p-6">
+        <div class="flex items-center gap-4">
+          <lucide-icon name="users" class="size-8"></lucide-icon>
+          <div>
+            <h2 class="card-title text-4xl font-bold">{{ stats().totalEmpleados }}</h2>
+            <p class="text-sm opacity-90">Empleados</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-sky-700 p-2 text-center text-xs uppercase font-semibold cursor-pointer hover:bg-sky-800 transition-colors flex justify-between px-4 items-center">
+        <span>Mas Info.</span>
+        <lucide-icon name="chevron-right" class="size-4"></lucide-icon>
+      </div>
+    </div>
+
+    <!-- Card 2: Activos en Produccion -->
+    <div class="card bg-emerald-600 text-white shadow-xl rounded-none">
+      <div class="card-body p-6">
+        <div class="flex items-center gap-4">
+          <lucide-icon name="monitor" class="size-8"></lucide-icon>
+          <div>
+            <h2 class="card-title text-4xl font-bold">{{ stats().activosProduccion }}</h2>
+            <p class="text-sm opacity-90">Activos en Produccion</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-emerald-700 p-2 text-center text-xs uppercase font-semibold cursor-pointer hover:bg-emerald-800 transition-colors flex justify-between px-4 items-center">
+        <span>Mas Info.</span>
+        <lucide-icon name="chevron-right" class="size-4"></lucide-icon>
+      </div>
+    </div>
+
+    <!-- Card 3: Activos Pendientes Devolucion -->
+    <div class="card bg-orange-400 text-white shadow-xl rounded-none">
+      <div class="card-body p-6">
+        <div class="flex items-center gap-4">
+          <lucide-icon name="rotate-ccw" class="size-8"></lucide-icon>
+          <div>
+            <h2 class="card-title text-4xl font-bold">{{ stats().activosPendientesDevolucion }}</h2>
+            <p class="text-sm opacity-90">Activos Pendientes devolucion</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-orange-500 p-2 text-center text-xs uppercase font-semibold cursor-pointer hover:bg-orange-600 transition-colors flex justify-between px-4 items-center">
+        <span>Mas Info.</span>
+        <lucide-icon name="chevron-right" class="size-4"></lucide-icon>
+      </div>
+    </div>
+
+    <!-- Card 4: Empleados Cesados -->
+    <div class="card bg-red-600 text-white shadow-xl rounded-none">
+      <div class="card-body p-6">
+        <div class="flex items-center gap-4">
+          <lucide-icon name="user-minus" class="size-8"></lucide-icon>
+          <div>
+            <h2 class="card-title text-4xl font-bold">{{ stats().empleadosCesados }}</h2>
+            <p class="text-sm opacity-90">Empleados Cesados</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-red-700 p-2 text-center text-xs uppercase font-semibold cursor-pointer hover:bg-red-800 transition-colors flex justify-between px-4 items-center">
+        <span>Mas Info.</span>
+        <lucide-icon name="chevron-right" class="size-4"></lucide-icon>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-base-100 p-4 rounded-lg shadow">
+    
+    <!-- Chart Section -->
+    <div class="flex flex-col items-center justify-center p-4">
+      <h3 class="text-lg font-bold mb-6 self-start text-gray-800">Distribucion por Estado</h3>
+      
+      <div class="flex items-center gap-8">
+        <!-- Donut Chart -->
+        <div class="relative size-56 rounded-full" 
+             [style.background]="chartBackground()">
+          <div class="absolute inset-8 bg-base-100 rounded-full flex items-center justify-center">
+             <!-- Hole -->
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="size-4 rounded-full bg-blue-500"></div>
+            <span class="text-sm text-gray-600">Asignado</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="size-4 rounded-full bg-red-500"></div>
+            <span class="text-sm text-gray-600">Baja</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="size-4 rounded-full bg-green-500"></div>
+            <span class="text-sm text-gray-600">Disponible</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="size-4 rounded-full bg-amber-400"></div>
+            <span class="text-sm text-gray-600">Mantenimiento</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="overflow-x-auto">
+      <table class="table table-sm table-zebra w-full">
+        <thead class="bg-gray-100 text-gray-700 font-bold">
+          <tr>
+            <th>Empleado</th>
+            <th>Movimiento</th>
+            <th>Sede</th>
+            <th>Fecha</th>
+            <th>Equipo</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm">
+          @for (activity of recentActivities(); track activity.id) {
+            <tr>
+              <td>{{ activity.empleado }}</td>
+              <td>{{ activity.movimiento }}</td>
+              <td>{{ activity.sede }}</td>
+              <td>{{ activity.fecha | date:'d/M/yy' }}</td>
+              <td>{{ activity.equipo }}</td>
+            </tr>
+          } @empty {
+             <tr><td colspan="5" class="text-center">No hay actividad reciente</td></tr>
+          }
+        </tbody>
+      </table>
+      <div class="text-center mt-2 text-xs text-gray-500">
+        Mostrando últimos 6 movimientos
+      </div>
+    </div>
+
+  </div>
+</div>
